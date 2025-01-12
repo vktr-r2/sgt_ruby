@@ -283,6 +283,8 @@ GEM
       rubocop-minitest
       rubocop-performance
       rubocop-rails
+    rubocop-rspec (3.3.0)
+      rubocop (~> 1.61)
     ruby-progressbar (1.13.0)
     rubyzip (2.4.1)
     securerandom (0.4.1)
@@ -373,7 +375,11 @@ DEPENDENCIES
   propshaft
   puma (>= 5.0)
   rails (~> 8.0.1)
+  rubocop
+  rubocop-performance
+  rubocop-rails
   rubocop-rails-omakase
+  rubocop-rspec
   selenium-webdriver
   solid_cable
   solid_cache

@@ -1,5 +1,5 @@
 class User < ApplicationRecord
-  ADMIN_EMAILS = ["vik.ristic@gmail.com"]
+  ADMIN_EMAILS = [ "vik.ristic@gmail.com" ]
 
   before_create :set_admin_status
 
