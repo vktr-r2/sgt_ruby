@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_01_13_034335) do
+ActiveRecord::Schema[8.0].define(version: 2025_01_15_041132) do
   create_table "golfers", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "source_id", default: "", null: false
     t.string "f_name", default: "", null: false
@@ -71,6 +71,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_13_034335) do
     t.boolean "major_championship", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "par", default: 72, null: false
     t.index ["source_id"], name: "index_tournaments_on_source_id"
     t.index ["tournament_id", "year"], name: "index_tournaments_on_tournament_id_and_year"
   end
