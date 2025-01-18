@@ -6,3 +6,29 @@ inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 # # Use `[a, [b, c]]` not `[ a, [ b, c ] ]`
 # Layout/SpaceInsideArrayLiteralBrackets:
 #   Enabled: false
+
+# .rubocop.yml
+
+Layout/IndentationStyle:
+  Enabled: true
+  EnforcedStyle: spaces # Use `tabs` for tab indentation
+  IndentationWidth: 2        # Number of spaces for indentation
+
+# Optional: Ensure proper alignment for method arguments and blocks
+Layout/ArgumentAlignment:
+  Enabled: true
+
+Layout/HashAlignment:
+  Enabled: true
+
+# Enforce max line length for better readability
+Layout/LineLength:
+  Max: 120 # Adjust as per your team's preferences
+
+# Ignore certain files/folders
+AllCops:
+  Exclude:
+    - "db/schema.rb"
+    - "node_modules/**/*"
+    - "vendor/**/*"
+    - "config/**/*"
