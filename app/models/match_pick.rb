@@ -1,0 +1,2 @@
+class MatchPick < ApplicationRecord
+end
