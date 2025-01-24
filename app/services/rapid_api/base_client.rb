@@ -5,8 +5,11 @@ module RapidApi
     private
 
     def make_request(url_path, params = {})
+      # binding.pry
       connection = Faraday.new(url: base_url) do |faraday|
         faraday.headers = default_headers
+        faraday.request :url_encoded # Ensure query parameters are encoded correctly
+        # faraday.response :logger, Rails.logger # To enable logging
       end
       begin
         # Make the API request
