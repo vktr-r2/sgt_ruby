@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_01_15_041132) do
+ActiveRecord::Schema[8.0].define(version: 2025_01_27_034657) do
   create_table "golfers", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "source_id", default: "", null: false
     t.string "f_name", default: "", null: false
@@ -62,7 +62,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_15_041132) do
     t.string "name", default: "", null: false
     t.integer "year", null: false
     t.string "golf_course", default: "", null: false
-    t.json "location", null: false
+    t.json "location"
     t.datetime "start_date", null: false
     t.datetime "end_date", null: false
     t.integer "week_number", null: false
