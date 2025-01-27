@@ -16,14 +16,14 @@ module Importers
       tournament = Tournament.find_or_initialize_by(tournament_id: attributes[:tournament_id], year: attributes[:year])
       tournament.assign_attributes(attributes)
 
+
+
       begin
         if tournament.save
           Rails.logger.info "Tournament #{tournament.name} for year #{tournament.year} saved successfully."
         else
           Rails.logger.error "Validation failed for tournament: #{tournament.errors.full_messages.join(', ')}"
         end
-      rescue ActiveRecord::RecordNotUnique => e
-        Rails.logger.error "Unique constraint violation for tournament_id: #{attributes[:tournament_id]}, year: #{attributes[:year]}. Error: #{e.message}"
       rescue StandardError => e
         Rails.logger.error "An unexpected error occurred while saving tournament: #{e.message}"
       end
