@@ -22,10 +22,10 @@ module Importers
         if tournament.save
           Rails.logger.info "Tournament #{tournament.name} for year #{tournament.year} saved successfully."
         else
-          Rails.logger.error "Validation failed for tournament: #{tournament.errors.full_messages.join(', ')}"
+          Rails.logger.error "Validation failed for tournament from schedule import: #{tournament.errors.full_messages.join(', ')}"
         end
       rescue StandardError => e
-        Rails.logger.error "An unexpected error occurred while saving tournament: #{e.message}"
+        Rails.logger.error "An unexpected error occurred while saving tournament from schedule import: #{e.message}"
       end
     end
   end
