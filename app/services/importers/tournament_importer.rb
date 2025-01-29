@@ -6,7 +6,6 @@ module Importers
 
     def process
       mapped_data = Mappers::TournamentMapper.new(@tourn_data).map_to_attributes
-      # binding.pry
       save_tournament(mapped_data)
     end
 

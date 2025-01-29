@@ -14,7 +14,8 @@ module Mappers
         "time_zone" => @tourn_data["timeZone"],
         "format" => @tourn_data["format"],
         "major_championship" => ApplicationHelper::TournamentEvaluations.is_major?(@tourn_data["name"]),
-        "par" => @tourn_data["courses"][0]["parTotal"]
+        "par" => @tourn_data["courses"][0]["parTotal"],
+        "purse" => @tourn_data["purse"]["$numberInt"].to_i
       }
     end
   end
