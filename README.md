@@ -18,7 +18,7 @@ Things you may want to cover:
     - 
 
 * Database initialization
-    - rails db:reset db:migrate db:seed
+    - rails db:drop db:create db:migrate db:seed
 
 * How to run the test suite
     - rspec -rf
