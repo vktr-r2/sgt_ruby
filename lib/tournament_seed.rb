@@ -17,7 +17,8 @@ class TournamentSeed < TableSeed
           week_number: fields[:week_number],
           time_zone: fields[:time_zone],
           format: fields[:format],
-          major_championship: fields[:major_championship]
+          major_championship: fields[:major_championship],
+          purse: fields[:purse]
         )
       end
     puts "Tournaments seeded!"
@@ -44,7 +45,8 @@ class TournamentSeed < TableSeed
           week_number: 10,
           time_zone: "America/New_York",
           format: "stroke",
-          major_championship: false
+          major_championship: false,
+          purse: 1000000
         }
       },
       {
@@ -65,7 +67,8 @@ class TournamentSeed < TableSeed
           week_number: 10,
           time_zone: "America/New_York",
           format: "Stroke",
-          major_championship: true
+          major_championship: true,
+          purse: 1000000
         }
       }
     ]
