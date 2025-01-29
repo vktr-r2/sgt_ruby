@@ -15,4 +15,36 @@ module ApplicationHelper
       year
     end
   end
+
+  module TournamentEvaluations
+    def self.is_major?(name)
+      name = name.downcase
+      majors = [ "masters tournament", "pga championship", "the open championship", "u.s. open" ]
+      majors.include?(name)
+    end
+
+    def self.determine_current_tourn_id
+      tourn_results = Tournament.where(week_number: determine_current_week, year: Date.today.year)
+
+      if more_than_one_current_tourn?(tourn_results)
+        determine_more_valuable_tourn(tourn_results)
+      else
+        tourn_results.pluck(:tournament_id).first
+      end
+    end
+
+    def self.more_than_one_current_tourn?(tourn_results)
+      tourn_results.length > 1
+    end
+
+    def self.determine_more_valuable_tourn(tourn_results)
+      greater_purse = tourn_results.max_by(&:purse)
+      tournament_id = greater_purse&.tournament_id
+      tournament_id
+    end
+
+    def self.determine_current_week(date = Date.today)
+      date.strftime("%V").to_i
+    end
+  end
 end

@@ -13,7 +13,7 @@ module Mappers
         "location" => @tourn_data["courses"][0]["location"].to_json,
         "time_zone" => @tourn_data["timeZone"],
         "format" => @tourn_data["format"],
-        "major_championship" => ApplicationHelper::DataEvaluations.is_major?(@tourn_data["name"]),
+        "major_championship" => ApplicationHelper::TournamentEvaluations.is_major?(@tourn_data["name"]),
         "par" => @tourn_data["courses"][0]["parTotal"]
       }
     end
