@@ -6,12 +6,13 @@ module Importers
 
     def process
       mapped_data = Mappers::TournamentMapper.new(@tourn_data).map_to_attributes
+      # binding.pry
       save_tournament(mapped_data)
     end
 
     private
     def save_tournament(attributes)
-      tournament = Tournament.find_by(tournament_id: attributes[:tournament_id], year: attributes[:year])
+      tournament = Tournament.find_by(tournament_id: attributes["tournament_id"], year: attributes["year"])
       tournament.assign_attributes(attributes)
 
       begin
