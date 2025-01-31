@@ -6,8 +6,5 @@ class Tournament < ApplicationRecord
   validates :week_number, presence: true
   validates :year, presence: true
   validates :format, presence: true
+  has_many :players, foreign_key: "last_active_tourney", primary_key: "unique_id"
 end
-
-# should probably consider allowing null for all fields not mentioned above
-# Also, should there be one service that handles imports for tournaments, and it can dynamically handle both schedule and tournament inserts?
-#
