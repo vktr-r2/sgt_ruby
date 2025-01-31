@@ -6,6 +6,7 @@ module Mappers
 
     def map_to_attributes
       {
+        "unique_id" => @tourn_data["_id"]["$oid"],
         "tournament_id" => @tourn_data["tournId"],
         "year" => ApplicationHelper::DateOperations.extract_year_from_date_hash(@tourn_data["date"]["start"]),
         "source_id" => @tourn_data.dig("_id", "$oid"),
