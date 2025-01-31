@@ -5,6 +5,6 @@ class TournamentImportJob < ApplicationJob
     api_data = RapidApi::TournamentClient.new.fetch(ApplicationHelper::TournamentEvaluations.determine_current_tourn_id)
     nil if api_data.blank?
 
-  Importers::TournamentImporter.new(api_data).process
+    Importers::TournamentImporter.new(api_data).process
   end
 end
