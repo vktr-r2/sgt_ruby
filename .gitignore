@@ -33,3 +33,7 @@
 # Ignore env keys for decrypting credentials and more.
 /config/master.key
 /config/credentials/development.key
+
+# Ignore Redis dump files
+*.rdb
+dump.rdb
