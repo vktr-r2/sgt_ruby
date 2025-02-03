@@ -26,6 +26,16 @@ Things you may want to cover:
 * Services (job queues, cache servers, search engines, etc.)
 
 * Deployment instructions
+    - bin/rails server (start server)
+    - redis-server (start redis)
+    - bundle exec sidekiq (start sidekiq)
 
 * Import data
+
     - ScheduleImportJob.perform_now
+    - TournamentImportJob.perform_now
+
+    OR 
+
+    - bundle exec sidekiq-scheduler run schedule_import_job
+    - bundle exec sidekiq-scheduler run tournament_import_job
