@@ -23,7 +23,10 @@ module Sgt
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
-    
+    # 
+    # Set sidekiq as worker for active_job
+    config.active_job.queue_adapter = :sidekiq
+
     config.generators do |g|
       g.factory_bot dir: 'spec/factories'
     end
