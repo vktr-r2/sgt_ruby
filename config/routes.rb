@@ -1,3 +1,6 @@
+require "sidekiq/web"
+require 'sidekiq-scheduler/web'
+
 Rails.application.routes.draw do
   devise_for :users
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
@@ -14,4 +17,8 @@ Rails.application.routes.draw do
   # root "posts#index"
   #
   root to: "home#index"
+
+  # Sidekiq paths
+  mount Sidekiq::Web => "/sidekiq"
+
 end
