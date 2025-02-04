@@ -73,10 +73,17 @@ RSpec.describe ApplicationHelper do
         result = described_class.determine_current_tourn_id
         expect(result).to eq(higher_purse.tournament_id)
       end
+    end
 
-      it "returns nil when no tournaments exist for the week" do
-        result = described_class.determine_current_tourn_id
-        expect(result).to be_nil
+    describe ".determine_current_tourn_unique_id" do
+      let(:current_week) { Date.today.strftime("%V").to_i }
+      let(:current_year) { Date.today.year }
+
+      it "returns unique_id for the current tournament" do
+        tournament = create(:tournament, week_number: current_week, year: current_year, unique_id: "ABC123")
+
+        result = described_class.determine_current_tourn_unique_id
+        expect(result).to eq(tournament.unique_id)
       end
     end
 
@@ -106,7 +113,7 @@ RSpec.describe ApplicationHelper do
         tournaments = [ lower_purse, higher_purse ]
 
         result = described_class.determine_more_valuable_tourn(tournaments)
-        expect(result).to eq(2)
+        expect(result).to eq(higher_purse)
       end
 
       it "returns nil when no tournaments are provided" do

@@ -23,14 +23,22 @@ module ApplicationHelper
       majors.include?(name)
     end
 
-    def self.determine_current_tourn_id
+    def self.determine_current_tournament
       tourn_results = Tournament.where(week_number: determine_current_week, year: Date.today.year)
 
       if more_than_one_current_tourn?(tourn_results)
         determine_more_valuable_tourn(tourn_results)
       else
-        tourn_results.pluck(:tournament_id).first
+        tourn_results.first
       end
+    end
+
+    def self.determine_current_tourn_id
+      determine_current_tournament[:tournament_id]
+    end
+
+    def self.determine_current_tourn_unique_id
+      determine_current_tournament[:unique_id]
     end
 
     def self.more_than_one_current_tourn?(tourn_results)
@@ -38,9 +46,8 @@ module ApplicationHelper
     end
 
     def self.determine_more_valuable_tourn(tourn_results)
-      greater_purse = tourn_results.max_by(&:purse)
-      tournament_id = greater_purse&.tournament_id
-      tournament_id
+      greater_purse_tournament = tourn_results.max_by(&:purse)
+      greater_purse_tournament
     end
 
     def self.determine_current_week(date = Date.today)
