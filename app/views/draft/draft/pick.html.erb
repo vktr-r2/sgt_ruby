@@ -1,0 +1,8 @@
+<h1>Pick Your Golfers</h1>
+
+<%= form_with url: draft_submit_path, method: :post do |form| %>
+  <%= form.label :golfer, "Select Golfer" %>
+  <%= form.select :golfer, options_from_collection_for_select(@sorted_golfers, :id, :l_name, :f_name), prompt: "Choose a player" %>
+
+  <%= form.submit "Submit" %>
+<% end %>
