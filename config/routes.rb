@@ -21,8 +21,8 @@ Rails.application.routes.draw do
 
   namespace :draft do
     get "pick", to: "draft#pick"
-    get "review", to: "draft#review"
     get "submit", to: "draft#submit"
+    get "review", to: "draft#review"
   end
 
 end
