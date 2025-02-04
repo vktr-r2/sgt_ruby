@@ -15,6 +15,8 @@ FactoryBot.define do
 end
 =begin
 
+    Schedule
+
     t.string "tournament_id", default: ""
     t.string "source_id", default: "", null: false
     t.string "name", default: "", null: false
