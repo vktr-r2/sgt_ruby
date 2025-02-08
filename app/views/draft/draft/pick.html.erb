@@ -1,8 +1,51 @@
 <h1>Pick Your Golfers</h1>
 
 <%= form_with url: draft_submit_path, method: :post do |form| %>
-  <%= form.label :golfer, "Select Golfer" %>
-  <%= form.select :golfer, options_from_collection_for_select(@sorted_golfers, :id, :l_name, :f_name), prompt: "Choose a player" %>
+  <% 8.times do |i| %>
+    <div>
+      <%= form.label "golfer_p#{i+1}", "Priority #{i+1}" %>
+      <%= form.select "golfer_p#{i+1}", 
+                     options_from_collection_for_select(@sorted_golfers, :id, :l_name, :f_name), 
+                     { prompt: "Choose a player" }, 
+                     class: "dropdown" %>
+      <br>
+    </div>
+  <% end %>
 
   <%= form.submit "Submit" %>
 <% end %>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const dropdowns = document.querySelectorAll(".dropdown");
+
+  dropdowns.forEach((dropdown) => {
+    dropdown.addEventListener("change", function() {
+      updateDropdowns();
+    });
+  });
+
+  function updateDropdowns() {
+    let selectedValues = new Set();
+
+    dropdowns.forEach((dropdown) => {
+      if (dropdown.value) {
+        selectedValues.add(dropdown.value);
+      }
+    });
+
+    dropdowns.forEach((dropdown) => {
+      let selected = dropdown.value;
+      let options = dropdown.querySelectorAll("option");
+
+      options.forEach((option) => {
+        if (selectedValues.has(option.value) && option.value !== selected) {
+          option.disabled = true;
+        } else {
+          option.disabled = false;
+        }
+      });
+    });
+  }
+});
+</script>
