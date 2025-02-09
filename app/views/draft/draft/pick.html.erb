@@ -1,19 +1,24 @@
-<h1>Pick Your Golfers</h1>
+<% if user_signed_in? %>
+  <h1>Pick Your Golfers</h1>
 
-<%= form_with url: draft_submit_path, method: :post do |form| %>
-  <% 8.times do |i| %>
-    <div>
-      <%= form.label "golfer_p#{i+1}", "Priority #{i+1}" %>
-      <%= form.select "golfer_p#{i+1}", 
-                     options_from_collection_for_select(@golfers, :id, ->(golfer) { "#{golfer.l_name}, #{golfer.f_name}" }), 
-                     { prompt: "Choose a player" }, 
-                     class: "dropdown" %>
-      <br>
-    </div>
+  <%= form_with url: draft_submit_path, method: :post do |form| %>
+    <% 8.times do |i| %>
+      <div>
+        <%= form.label "golfer_p#{i+1}", "Priority #{i+1}" %>
+        <%= form.select "golfer_p#{i+1}", 
+                      options_from_collection_for_select(@golfers, :id, ->(golfer) { "#{golfer.l_name}, #{golfer.f_name}" }), 
+                      { prompt: "Choose a player" }, 
+                      class: "dropdown" %>
+        <br>
+      </div>
+    <% end %>
+
+    <%= form.submit "Submit" %>
   <% end %>
+<% else%>
+  <%= link_to "Home", root_path %>
+<%end%>
 
-  <%= form.submit "Submit" %>
-<% end %>
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
