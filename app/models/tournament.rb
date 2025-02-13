@@ -7,4 +7,5 @@ class Tournament < ApplicationRecord
   validates :year, presence: true
   validates :format, presence: true
   has_many :players, foreign_key: "last_active_tourney", primary_key: "unique_id"
+  has_many :match_picks, foreign_key: "tournament_id", primary_key: "id", dependent: :destroy
 end
