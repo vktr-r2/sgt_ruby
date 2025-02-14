@@ -11,4 +11,15 @@ module DraftHelper
       sorted_golfers
     end
   end
+
+  module PickData
+    def self.get_users_picks_for_tourn(user_id)
+      tournament = ApplicationHelper::TournamentEvaluations.determine_current_tournament
+      picks = MatchPick.where(
+        user_id: user_id,
+        tournament_id: tournament.id
+        )
+      picks
+    end
+  end
 end
