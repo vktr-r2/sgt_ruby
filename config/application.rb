@@ -21,11 +21,14 @@ module Sgt
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # config.time_zone = "Central Time (US & Canada)"
-    # config.eager_load_paths << Rails.root.join("extras")
-    # 
     # Set sidekiq as worker for active_job
     config.active_job.queue_adapter = :sidekiq
+    Sidekiq.configure_server do |config|
+      Time.zone = "Eastern Time (US & Canada)"
+    end
+    config.time_zone = "Eastern Time (US & Canada)"
+    config.active_record.default_timezone = :utc
+    # config.eager_load_paths << Rails.root.join("extras")
 
     config.generators do |g|
       g.factory_bot dir: 'spec/factories'
