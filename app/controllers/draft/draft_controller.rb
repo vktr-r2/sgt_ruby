@@ -1,9 +1,18 @@
 module Draft
   class DraftController < ApplicationController
     before_action :authenticate_user!
+
+    def index
+      current_time = Time.zone.now
+      if current_time.tuesday? || current_time.wednesday?
+        redirect_to draft_pick_path
+      else
+        redirect_to draft_review_path
+      end
+    end
+
     def pick
       @golfers = DraftHelper::GolferData.get_current_tourn_golfers
-      @golfers
     end
 
     def submit

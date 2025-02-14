@@ -20,7 +20,7 @@ Rails.application.routes.draw do
   root to: "home#index"
 
   namespace :draft do
-    get "pick", to: "draft#pick"
+    get "pick", to: "draft#index"
     post "submit", to: "draft#submit"
     get "review", to: "draft#review"
   end
