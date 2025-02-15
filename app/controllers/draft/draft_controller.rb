@@ -3,16 +3,28 @@ module Draft
     before_action :authenticate_user!
 
     def index
-      current_time = Time.zone.now
-      if current_time.tuesday? || current_time.wednesday?
-        redirect_to draft_pick_path
-      else
-        redirect_to draft_review_path
-      end
-    end
-
-    def pick
       @golfers = DraftHelper::GolferData.get_current_tourn_golfers
+      current_time = Time.zone.now
+      # Handle cases where its Monday (not time to draft yet) or tournament golfers not avail in DB.
+      if @golfers.blank?
+        @mode = :unavailable
+      # Handle draft day cases
+      elsif current_time.tuesday? || current_time.wednesday?
+        @mode = :pick
+      # Handle reviewing your existing picks any other time.
+      else
+        @mode = :review
+        tournament = ApplicationHelper::TournamentEvaluations.determine_current_tournament
+        picks = DraftHelper::PickData.get_users_picks_for_tourn(current_user.id)
+
+        @data = {
+          tournament_name: tournament.name,
+          year: Date.today.year,
+          picks: picks
+        }
+      end
+
+      render "draft"
     end
 
     def submit
@@ -37,15 +49,8 @@ module Draft
     rescue StandardError => e
       redirect_to draft_pick_path, alert: "Error submitting picks. Please try again."
     end
-
-    def review
-      tournament = ApplicationHelper::TournamentEvaluations.determine_current_tournament
-      golfers = DraftHelper::PickData.get_users_picks_for_tourn(current_user.id)
-      @data = {
-        tournament_name: tournament.name,
-        year: Date.today.year,
-        picks: golfers
-      }
-    end
   end
 end
+
+# Setup draft view to check if picks for user+tournament combo already exist, if so redirect to review
+# Setup a job to check on Wednesday midnight to ensure picks have been made - if not then randomize picks

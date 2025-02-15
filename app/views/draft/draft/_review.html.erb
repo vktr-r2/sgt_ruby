@@ -1,0 +1,9 @@
+<% if user_signed_in? %>
+  <h1>Your Picks for <%= data[:tournament_name] %> (<%= data[:year] %>)</h1>
+
+  <ul>
+    <% data[:picks].each do |pick| %>
+      <li><%= pick %></li>
+    <% end %>
+  </ul>
+<%end%>
