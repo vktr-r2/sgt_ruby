@@ -1,10 +1,12 @@
 class ScheduleImportJob < ApplicationJob
   queue_as :default
 
-  def perform
-    api_data = RapidApi::ScheduleClient.new.fetch
-    return nil if api_data.blank?
+  def initialize
+    @api_data = RapidApi::ScheduleClient.new.fetch
+  end
 
-  Importers::ScheduleImporter.new(api_data).process
+  def perform
+    return nil if api_data.blank?
+    Importers::ScheduleImporter.new(api_data).process
   end
 end

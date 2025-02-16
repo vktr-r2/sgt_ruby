@@ -2,6 +2,7 @@ module Mappers
   class TournamentMapper
     def initialize(tourn_data)
       @tourn_data = tourn_data
+      @tournament_service = BusinessLogic.TournamentService.new
     end
 
     def map_to_attributes
@@ -14,7 +15,7 @@ module Mappers
         "location" => @tourn_data["courses"][0]["location"].to_json,
         "time_zone" => @tourn_data["timeZone"],
         "format" => @tourn_data["format"],
-        "major_championship" => ApplicationHelper::TournamentEvaluations.is_major?(@tourn_data["name"]),
+        "major_championship" => @tournament_service.is_major?(@tourn_data["name"]),
         "par" => @tourn_data["courses"][0]["parTotal"],
         "purse" => @tourn_data["purse"]["$numberInt"].to_i
       }

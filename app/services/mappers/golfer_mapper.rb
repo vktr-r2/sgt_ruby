@@ -10,7 +10,7 @@ module Mappers
         "source_id" => @golfer_data["playerId"],
         "f_name" => @golfer_data["firstName"],
         "l_name" => @golfer_data["lastName"],
-        "last_active_tourney" => @tournament_unique_id # References tounament.unique_id
+        "last_active_tourney" => @tournament_unique_id
       }
     end
   end

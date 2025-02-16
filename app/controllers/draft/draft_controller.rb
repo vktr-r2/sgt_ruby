@@ -16,7 +16,7 @@ module Draft
       # Handle reviewing your existing picks any other time.
       else
         @mode = :review
-        tournament = ApplicationHelper::TournamentEvaluations.determine_current_tournament
+        tournament = BusinessLogic::TournamentService.new.current_tournament
 
         @data = {
           tournament_name: tournament.name,
