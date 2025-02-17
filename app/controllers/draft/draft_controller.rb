@@ -1,35 +1,28 @@
 module Draft
   class DraftController < ApplicationController
-    before_action :authenticate_user!
+    before_action :authenticate_user!, :load_golfers, :load_draft_review_data
+    before_action :load_tournament, only: [ :submit ]
 
     def index
-      @golfers = DraftHelper::GolferData.get_current_tourn_golfers
-      picks = DraftHelper::PickData.get_users_picks_for_tourn(current_user.id) || []
       current_time = Time.zone.now
 
       # Handle cases where its Monday (not time to draft yet) or tournament golfers not avail in DB.
       if @golfers.blank?
         @mode = :unavailable
+
       # Handle draft day cases
       elsif (current_time.tuesday? || current_time.wednesday?) && picks.empty?
         @mode = :pick
+
       # Handle reviewing your existing picks any other time.
       else
         @mode = :review
-        tournament = BusinessLogic::TournamentService.new.current_tournament
-
-        @data = {
-          tournament_name: tournament.name,
-          year: Date.today.year,
-          picks: picks
-        }
       end
 
       render "draft"
     end
 
     def submit
-      tournament = ApplicationHelper::TournamentEvaluations.determine_current_tournament
       tournament_id = tournament.id
       # Process each golfer selection
       8.times do |i|
@@ -49,6 +42,19 @@ module Draft
       redirect_to draft_review_path, notice: "Picks submitted successfully!"
     rescue StandardError => e
       redirect_to draft_pick_path, alert: "Error submitting picks. Please try again."
+    end
+
+    private
+    def load_golfers
+      @golfers = BusinessLogic::GolferService.new.get_current_tourn_golfers
+    end
+
+    def load_draft_review_data
+      @data = BusinessLogic::DraftService.new(current_user).get_draft_review_data
+    end
+
+    def load_tournament
+      @tournament = BusinessLogic::TournamentService.current_tournament
     end
   end
 end
