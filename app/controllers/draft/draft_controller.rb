@@ -11,7 +11,7 @@ module Draft
         @mode = :unavailable
 
       # Handle draft day cases
-      elsif (current_time.tuesday? || current_time.wednesday?) && picks.empty?
+      elsif (current_time.tuesday? || current_time.wednesday?) && @data[:picks].blank?
         @mode = :pick
 
       # Handle reviewing your existing picks any other time.
@@ -23,7 +23,7 @@ module Draft
     end
 
     def submit
-      tournament_id = tournament.id
+      tournament_id = @tournament.id
       # Process each golfer selection
       8.times do |i|
         golfer_id = params["golfer_p#{i+1}"]
@@ -41,7 +41,7 @@ module Draft
 
       redirect_to draft_review_path, notice: "Picks submitted successfully!"
     rescue StandardError => e
-      redirect_to draft_pick_path, alert: "Error submitting picks. Please try again."
+      redirect_to draft_index_path, alert: "Error submitting picks. Please try again."
     end
 
     private
@@ -54,7 +54,7 @@ module Draft
     end
 
     def load_tournament
-      @tournament = BusinessLogic::TournamentService.current_tournament
+      @tournament = BusinessLogic::TournamentService.new.current_tournament
     end
   end
 end
