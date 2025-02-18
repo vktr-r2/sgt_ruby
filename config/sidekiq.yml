@@ -14,3 +14,7 @@
     tournament_import_job:
       cron: "0 0 * * 2" # Runs every week at Tuesday 00:00:00 EST
       class: "TournamentImportJob"
+
+    validate_picks_job:
+      cron: "0 0 * * 4" # Runs every week at Thursday 00:00:00 EST
+      class: "ValidatePicksJob"

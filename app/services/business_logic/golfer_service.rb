@@ -10,6 +10,7 @@ module BusinessLogic
       sort_golfers(golfers)
     end
 
+    private
     def sort_golfers(golfers)
       sorted_golfers = golfers.sort_by { |golfer| golfer[:l_name] }
       sorted_golfers

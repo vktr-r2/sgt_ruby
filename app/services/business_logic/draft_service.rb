@@ -1,6 +1,6 @@
 module BusinessLogic
   class DraftService
-    def initialize(current_user)
+    def initialize(current_user = 1)
       @current_tournament = BusinessLogic::TournamentService.new.current_tournament
       @user_service = BusinessLogic::UserService.new
       @current_tourn_golfers = BusinessLogic::GolferService.new.get_current_tourn_golfers
