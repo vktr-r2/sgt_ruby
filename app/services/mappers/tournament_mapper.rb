@@ -2,7 +2,7 @@ module Mappers
   class TournamentMapper
     def initialize(tourn_data)
       @tourn_data = tourn_data
-      @tournament_service = BusinessLogic.TournamentService.new
+      @tournament_service = BusinessLogic::TournamentService.new
     end
 
     def map_to_attributes
