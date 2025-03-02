@@ -34,11 +34,11 @@ module BusinessLogic
     def validate_user_picks(user_id)
       current_picks = get_user_picks_for_tourn(user_id)
       if current_picks.blank?
-        create_random_picks_for_user(user_id, current_picks)
+       adams_awesome_randomizer(user_id, current_picks)
       end
     end
 
-    def create_random_picks_for_user(user_id, current_picks)
+    def adams_awesome_randomizer(user_id, current_picks)
       8.times do |i|
         random_golfer = random_pick(current_picks)
         current_picks << random_golfer
