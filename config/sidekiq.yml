@@ -3,6 +3,9 @@
   - default
   - mailers
 
+:redis:
+  url: <%= ENV["REDIS_URL"] %>
+
 :timezone: "America/New_York"
 
 :scheduler:

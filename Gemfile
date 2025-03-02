@@ -84,3 +84,7 @@ group :test do
   gem "selenium-webdriver"
   gem "webmock"
 end
+
+gem "dockerfile-rails", ">= 1.7", :group => :development
+
+gem "redis", "~> 5.4"

@@ -25,10 +25,17 @@ module Sgt
     config.active_job.queue_adapter = :sidekiq
     Sidekiq.configure_server do |config|
       Time.zone = "Eastern Time (US & Canada)"
+      config.redis = { url: ENV["REDIS_URL"] }
     end
+    
     config.time_zone = "Eastern Time (US & Canada)"
     config.active_record.default_timezone = :utc
     # config.eager_load_paths << Rails.root.join("extras")
+    
+    Sidekiq.configure_client do |config|
+      config.redis = { url: ENV["REDIS_URL"] }
+    end
+    
 
     config.generators do |g|
       g.factory_bot dir: 'spec/factories'
