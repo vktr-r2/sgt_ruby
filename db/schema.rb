@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_01_31_034005) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_25_181145) do
   create_table "golfers", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "source_id", default: "", null: false
     t.string "f_name", default: "", null: false
@@ -88,6 +88,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_31_034005) do
     t.datetime "updated_at", null: false
     t.string "name", null: false
     t.boolean "admin", default: false, null: false
+    t.string "authentication_token"
+    t.index ["authentication_token"], name: "index_users_on_authentication_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
