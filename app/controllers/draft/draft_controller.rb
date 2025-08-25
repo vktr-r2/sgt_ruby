@@ -19,29 +19,38 @@ module Draft
         @mode = :review
       end
 
-      render "draft"
+      render json: {
+        mode: @mode,
+        golfers: @golfers.map { |g| golfer_json(g) },
+        tournament: tournament_json(@data),
+        picks: @data[:picks].map { |p| pick_json(p) }
+      }
     end
 
     def submit
       tournament_id = @tournament.id
+      picks_data = params[:picks] || []
+      
+      # Clear existing picks first
+      MatchPick.where(user_id: current_user.id, tournament_id: tournament_id).destroy_all
+      
       # Process each golfer selection
-      8.times do |i|
-        golfer_id = params["golfer_p#{i+1}"]
-
-        # Only create record if a golfer was selected
+      picks_data.each_with_index do |pick, index|
+        golfer_id = pick[:golfer_id] || pick["golfer_id"]
+        
         if golfer_id.present?
           MatchPick.create!(
             user_id: current_user.id,
             tournament_id: tournament_id,
             golfer_id: golfer_id,
-            priority: i + 1
+            priority: index + 1
           )
         end
       end
 
-      redirect_to draft_review_path, notice: "Picks submitted successfully!"
+      render json: { message: "Picks submitted successfully!" }
     rescue StandardError => e
-      redirect_to draft_index_path, alert: "Error submitting picks. Please try again."
+      render json: { error: "Error submitting picks: #{e.message}" }, status: :unprocessable_entity
     end
 
     private
@@ -56,8 +65,31 @@ module Draft
     def load_tournament
       @tournament = BusinessLogic::TournamentService.new.current_tournament
     end
+    
+    private
+    
+    def golfer_json(golfer)
+      {
+        id: golfer.id,
+        first_name: golfer.first_name,
+        last_name: golfer.last_name,
+        full_name: "#{golfer.first_name} #{golfer.last_name}"
+      }
+    end
+    
+    def tournament_json(data)
+      {
+        name: data[:tournament_name],
+        year: data[:year]
+      }
+    end
+    
+    def pick_json(pick)
+      {
+        id: pick.id,
+        golfer_id: pick.golfer_id,
+        priority: pick.priority
+      }
+    end
   end
 end
-
-# Setup draft view to check if picks for user+tournament combo already exist, if so redirect to review
-# Setup a job to check on Wednesday midnight to ensure picks have been made - if not then randomize picks
