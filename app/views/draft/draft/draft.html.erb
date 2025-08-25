@@ -1,7 +1,0 @@
-<% if @mode == :pick %>
-  <%= render "pick", golfers: @golfers %>
-<% elsif @mode == :review %>
-  <%= render "review", data: @data %>
-<% else%>
-    <%= render "unavailable"%>
-<% end %>
