@@ -10,6 +10,7 @@ class User < ApplicationRecord
          :recoverable, :rememberable, :validatable
 
   validates :name, presence: true
+  validates :authentication_token, uniqueness: true, allow_nil: true
   
   def ensure_authentication_token!
     self.authentication_token = generate_authentication_token if authentication_token.blank?
