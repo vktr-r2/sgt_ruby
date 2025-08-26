@@ -71,9 +71,9 @@ module Draft
     def golfer_json(golfer)
       {
         id: golfer.id,
-        first_name: golfer.first_name,
-        last_name: golfer.last_name,
-        full_name: "#{golfer.first_name} #{golfer.last_name}"
+        first_name: golfer.f_name,
+        last_name: golfer.l_name,
+        full_name: "#{golfer.f_name} #{golfer.l_name}"
       }
     end
     

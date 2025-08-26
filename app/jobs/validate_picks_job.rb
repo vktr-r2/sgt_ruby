@@ -1,7 +1,7 @@
 class ValidatePicksJob < ApplicationJob
   queue_as :default
 
-  def permform
+  def perform
     setup
     @draft_service.validate_picks
   end
