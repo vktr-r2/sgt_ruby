@@ -19,5 +19,5 @@
       class: "TournamentImportJob"
 
     validate_picks_job:
-      cron: "0 0 * * 4" # Runs every week at Thursday 00:00:00 EST
+      cron: "59 23 * * 3" # Runs every week at Wednesday 11:59:00 PM EST
       class: "ValidatePicksJob"

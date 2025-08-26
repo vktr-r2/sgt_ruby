@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-class Users::SessionsController < Devise::SessionsController
-  skip_before_action :authenticate_user!
+class Users::SessionsController < ApplicationController
+  skip_before_action :authenticate_user!, only: [:create]
   
   def create
     user = User.find_by(email: sign_in_params[:email])
@@ -23,8 +23,11 @@ class Users::SessionsController < Devise::SessionsController
   end
   
   def destroy
-    if current_user
-      current_user.update(authentication_token: nil)
+    token = request.headers['Authorization']&.split(' ')&.last
+    user = User.find_by(authentication_token: token)
+    
+    if user
+      user.update(authentication_token: nil)
       render json: { message: 'Signed out successfully' }
     else
       render json: { error: 'Not signed in' }, status: :unauthorized
