@@ -3,8 +3,8 @@ class ScheduleImportJob < ApplicationJob
 
   def perform
     setup
-    return nil if api_data.blank?
-    Importers::ScheduleImporter.new(api_data).process
+    return nil if @api_data.blank?
+    Importers::ScheduleImporter.new(@api_data).process
   end
 
   def setup
