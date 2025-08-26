@@ -27,7 +27,7 @@ class Users::SessionsController < ApplicationController
     user = User.find_by(authentication_token: token)
     
     if user
-      user.update(authentication_token: nil)
+      user.update_column(:authentication_token, nil)  # Use update_column to bypass callbacks
       render json: { message: 'Signed out successfully' }
     else
       render json: { error: 'Not signed in' }, status: :unauthorized
