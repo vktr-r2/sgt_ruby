@@ -11,7 +11,10 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[8.0].define(version: 2025_08_25_181145) do
-  create_table "golfers", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "pg_catalog.plpgsql"
+
+  create_table "golfers", force: :cascade do |t|
     t.string "source_id", default: "", null: false
     t.string "f_name", default: "", null: false
     t.string "l_name", default: "", null: false
@@ -21,7 +24,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_25_181145) do
     t.index ["source_id"], name: "index_golfers_on_source_id"
   end
 
-  create_table "match_picks", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "match_picks", force: :cascade do |t|
     t.bigint "user_id"
     t.bigint "tournament_id"
     t.bigint "golfer_id"
@@ -34,7 +37,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_25_181145) do
     t.index ["user_id"], name: "index_match_picks_on_user_id"
   end
 
-  create_table "match_results", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "match_results", force: :cascade do |t|
     t.bigint "tournament_id"
     t.bigint "user_id"
     t.integer "total_score", null: false
@@ -47,7 +50,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_25_181145) do
     t.index ["user_id"], name: "index_match_results_on_user_id"
   end
 
-  create_table "scores", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "scores", force: :cascade do |t|
     t.bigint "match_pick_id"
     t.integer "score", default: 0
     t.integer "round", default: 1
@@ -56,7 +59,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_25_181145) do
     t.index ["match_pick_id"], name: "index_scores_on_match_pick_id"
   end
 
-  create_table "tournaments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "tournaments", force: :cascade do |t|
     t.string "tournament_id", default: ""
     t.string "source_id", default: "", null: false
     t.string "name", default: "", null: false
@@ -78,7 +81,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_25_181145) do
     t.index ["tournament_id", "year"], name: "index_tournaments_on_tournament_id_and_year"
   end
 
-  create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
     t.string "reset_password_token"
