@@ -27,6 +27,7 @@ module BusinessLogic
     end
 
     def is_major?(name)
+      return false if name.nil? || name.empty?
       MAJORS.include?(name.downcase)
     end
 
@@ -47,7 +48,7 @@ module BusinessLogic
     end
 
     def determine_more_valuable_tourn(tourn_results)
-      tourn_results.max_by(&:purse)
+      tourn_results.max_by { |t| t.purse || 0 }
     end
   end
 end
