@@ -2,15 +2,17 @@ require 'securerandom'
 
 FactoryBot.define do
   factory :tournament do
-    tournament_id { rand(1000..9999) }            # Random tournId
-    source_id { SecureRandom.base64(10) }         # Random unique "_id"
+    tournament_id { rand(1000..9999).to_s }
+    source_id { SecureRandom.base64(10) }
+    sequence(:unique_id) { |n| "tournament_#{n}_#{SecureRandom.hex(4)}" }
     name { "Genesis Invitational" }
     year { Date.today.year }
     golf_course { "Riviera Country Club" }
     week_number { Date.today.strftime("%V").to_i }
-    purse { 8700000 }  # Example purse amount
+    purse { 8700000 }
     start_date { Date.today }
     end_date { Date.today + 4.days }
+    format { "Stroke Play" }
   end
 end
 =begin
