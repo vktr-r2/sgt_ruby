@@ -1,21 +1,24 @@
-# MySQL. Versions 5.5.8 and up are supported.
+# PostgreSQL. Versions 9.3 and up are supported.
 #
-# Install the MySQL driver
-#   gem install mysql2
+# Install the pg driver
+#   gem install pg
 #
-# Ensure the MySQL gem is defined in your Gemfile
-#   gem "mysql2"
+# On macOS with Homebrew:
+#   gem install pg -- --with-pg-config=/usr/local/bin/pg_config
 #
-# And be sure to use new-style password hashing:
-#   https://dev.mysql.com/doc/refman/5.7/en/password-hashing.html
+# On Windows:
+#   gem install pg
+#       Choose the win32 build.
+#       Install PostgreSQL and put its /bin directory on your path.
 #
 default: &default
-  adapter: mysql2
-  encoding: utf8mb4
+  adapter: postgresql
+  encoding: unicode
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  username: <%= Rails.application.credentials.dig(:sgt_db, :user_name) %>
-  password: <%= Rails.application.credentials.dig(:sgt_db, :password) %>
+  username: <%= ENV.fetch("POSTGRES_USER") { Rails.application.credentials.dig(:sgt_db, :user_name) || "postgres" } %>
+  password: <%= ENV.fetch("POSTGRES_PASSWORD") { Rails.application.credentials.dig(:sgt_db, :password) || "" } %>
   host: <%= ENV.fetch("DB_HOST") { "127.0.0.1" } %>
+  port: <%= ENV.fetch("DB_PORT") { 5432 } %>
 
 development:
   <<: *default
@@ -51,28 +54,28 @@ test:
 production:
   primary: &primary_production
     <<: *default
-    database: <%= ENV["MYSQL_DATABASE"] || "sgt_production" %>
-    username: <%= ENV["MYSQL_USER"] || Rails.application.credentials.dig(:sgt_db, :user_name) %>
-    password: <%= ENV["MYSQL_PASSWORD"] || Rails.application.credentials.dig(:sgt_db, :password) %>
+    database: <%= ENV["POSTGRES_DATABASE"] || "sgt_production" %>
+    username: <%= ENV["POSTGRES_USER"] || Rails.application.credentials.dig(:sgt_db, :user_name) %>
+    password: <%= ENV["POSTGRES_PASSWORD"] || Rails.application.credentials.dig(:sgt_db, :password) %>
     host: <%= ENV["DATABASE_HOST"] || "localhost" %>
-    port: 3306
+    port: <%= ENV["DB_PORT"] || 5432 %>
     url: <%= ENV["DATABASE_URL"] %>
 
   cache:
     <<: *primary_production
-    database: <%= ENV["MYSQL_DATABASE_CACHE"] || "sgt_production_cache" %>
+    database: <%= ENV["POSTGRES_DATABASE_CACHE"] || "sgt_production_cache" %>
     migrations_paths: db/cache_migrate
     url: <%= URI.parse(ENV["DATABASE_URL"]).tap { |url| url.path += "_cache" } if ENV["DATABASE_URL"] %>
 
   queue:
     <<: *primary_production
-    database: <%= ENV["MYSQL_DATABASE_QUEUE"] || "sgt_production_queue" %>
+    database: <%= ENV["POSTGRES_DATABASE_QUEUE"] || "sgt_production_queue" %>
     migrations_paths: db/queue_migrate
     url: <%= URI.parse(ENV["DATABASE_URL"]).tap { |url| url.path += "_queue" } if ENV["DATABASE_URL"] %>
 
   cable:
     <<: *primary_production
-    database: <%= ENV["MYSQL_DATABASE_CABLE"] || "sgt_production_cable" %>
+    database: <%= ENV["POSTGRES_DATABASE_CABLE"] || "sgt_production_cable" %>
     migrations_paths: db/cable_migrate
     url: <%= URI.parse(ENV["DATABASE_URL"]).tap { |url| url.path += "_cable" } if ENV["DATABASE_URL"] %>
 
