@@ -210,9 +210,11 @@ RSpec.describe BusinessLogic::GolferService do
     end
 
     context 'with mixed tournament data' do
+      let!(:past_tournament) { create(:tournament, unique_id: 'past_tournament') }
+      let!(:future_tournament) { create(:tournament, unique_id: 'future_tournament') }
       let!(:current_golfers) { create_list(:golfer, 8, last_active_tourney: tournament.unique_id) }
-      let!(:past_tournament_golfers) { create_list(:golfer, 5, last_active_tourney: 'past_tournament') }
-      let!(:future_tournament_golfers) { create_list(:golfer, 3, last_active_tourney: 'future_tournament') }
+      let!(:past_tournament_golfers) { create_list(:golfer, 5, last_active_tourney: past_tournament.unique_id) }
+      let!(:future_tournament_golfers) { create_list(:golfer, 3, last_active_tourney: future_tournament.unique_id) }
 
       before do
         allow(tournament_service).to receive(:current_tournament_unique_id).and_return(tournament.unique_id)
