@@ -50,9 +50,9 @@ gem "devise"
 # Faraday for HTTP calls
 gem "faraday"
 
-# Sidekiq queue-er - temporarily disabled for Railway deployment
-# gem "sidekiq"
-# gem "sidekiq-scheduler"
+# Sidekiq queue-er
+gem "sidekiq"
+gem "sidekiq-scheduler"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
