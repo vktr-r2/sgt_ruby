@@ -6,7 +6,7 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
             when 'test'
               '*'
             else
-              ENV['FRONTEND_URL']
+              ENV['FRONTEND_URL'] || '*'
             end
     
     resource '*',
