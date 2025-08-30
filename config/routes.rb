@@ -1,5 +1,5 @@
-require "sidekiq/web"
-require 'sidekiq-scheduler/web'
+# require "sidekiq/web"
+# require 'sidekiq-scheduler/web'
 
 Rails.application.routes.draw do
   devise_for :users, controllers: {
@@ -13,8 +13,8 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   
-  # Sidekiq paths - only mount if Redis is available
-  mount Sidekiq::Web => "/sidekiq" if ENV["REDIS_URL"].present?
+  # Sidekiq paths - temporarily disabled
+  # mount Sidekiq::Web => "/sidekiq" if ENV["REDIS_URL"].present?
 
   # API root endpoint
   root to: "home#index"

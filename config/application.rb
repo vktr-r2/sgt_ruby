@@ -21,21 +21,8 @@ module Sgt
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # Set sidekiq as worker for active_job only if Redis is available
-    if ENV["REDIS_URL"].present?
-      config.active_job.queue_adapter = :sidekiq
-      Sidekiq.configure_server do |config|
-        Time.zone = "Eastern Time (US & Canada)"
-        config.redis = { url: ENV["REDIS_URL"] }
-      end
-      
-      Sidekiq.configure_client do |config|
-        config.redis = { url: ENV["REDIS_URL"] }
-      end
-    else
-      # Use async adapter for development/testing without Redis
-      config.active_job.queue_adapter = :async
-    end
+    # Use async adapter (Sidekiq temporarily disabled for Railway deployment)
+    config.active_job.queue_adapter = :async
     
     config.time_zone = "Eastern Time (US & Canada)"
     config.active_record.default_timezone = :utc

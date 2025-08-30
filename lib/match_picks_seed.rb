@@ -1,4 +1,4 @@
-class MatchPickSeed < TableSeed
+class MatchPicksSeed < TableSeed
   def seed
     puts "Seeding match_picks..."
       match_pick_data.each do |pick|
