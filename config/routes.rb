@@ -13,8 +13,8 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   
-  # Sidekiq paths
-  mount Sidekiq::Web => "/sidekiq"
+  # Sidekiq paths - only mount if Redis is available
+  mount Sidekiq::Web => "/sidekiq" if ENV["REDIS_URL"].present?
 
   # API root endpoint
   root to: "home#index"
