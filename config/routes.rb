@@ -24,4 +24,12 @@ Rails.application.routes.draw do
     post "/submit", to: "draft#submit", as: :submit
   end
 
+  namespace :admin do
+    get "/", to: "admin#index", as: :index
+    get "/table/:table", to: "admin#table_data", as: :table_data
+    post "/table/:table", to: "admin#create_record", as: :create_record
+    put "/table/:table/:id", to: "admin#update_record", as: :update_record
+    delete "/table/:table/:id", to: "admin#delete_record", as: :delete_record
+  end
+
 end
