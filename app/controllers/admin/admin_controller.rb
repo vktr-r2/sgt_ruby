@@ -54,6 +54,8 @@ class Admin::AdminController < ApplicationController
     record = model.find(params[:id])
     
     if record.update(record_params(model))
+      # Ensure updated_at is refreshed and reload the record to get the latest timestamps
+      record.reload
       render json: { record: record, message: 'Record updated successfully' }
     else
       render json: { errors: record.errors }, status: :unprocessable_entity
