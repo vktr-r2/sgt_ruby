@@ -8,7 +8,7 @@ FactoryBot.define do
     authentication_token { nil }
     
     trait :admin do
-      admin { true }
+      email { "vik.ristic@gmail.com" }  # Use email from ADMIN_EMAILS
       name { "Admin User" }
     end
     
