@@ -39,3 +39,19 @@ Things you may want to cover:
 
     - bundle exec sidekiq-scheduler run schedule_import_job
     - bundle exec sidekiq-scheduler run tournament_import_job
+
+
+
+IMPROVE ADMIN FUNCTIONALITY 
+
+- Adding a Golfer should ask you which tournament they should be linked to (DONE)
+    - Should give me a drop down menu with available tournaments that already exist in the database ()
+- Adding a User should ask me to only input a name, email, and an unencrypted password. On submit, we should encrypt the password
+
+- Add password reset capabilities
+- Add reminder email services
+- Add the scottie scheffler rule 
+- Dynamic draft:
+    - Make draft window start two days before tournament is set to start, not just Tues + Wed
+    - Make draft window only open when the tournament type is 'stroke'
+    - Check live API response for season schedule to ensure it only brings in tournaments from Jan - TOUR Championship in Aug/Sept
