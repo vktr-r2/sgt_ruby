@@ -14,7 +14,7 @@ class CurrentTournamentSeed
         end_date: 4.days.ago,
         week_number: 34,
         year: 2025,
-        format: "Stroke Play",
+        format: "stroke",
         tournament_id: "test-championship-2025",
         unique_id: "test-championship-2025"
       },
@@ -24,7 +24,7 @@ class CurrentTournamentSeed
         end_date: Date.current + 1.day,
         week_number: 35,
         year: 2025,
-        format: "Stroke Play", 
+        format: "stroke", 
         tournament_id: "current-tournament-2025",
         unique_id: "current-tournament-2025"
       },
@@ -34,7 +34,7 @@ class CurrentTournamentSeed
         end_date: 1.week.from_now + 3.days,
         week_number: 36,
         year: 2025,
-        format: "Match Play",
+        format: "stroke",
         tournament_id: "next-week-championship-2025",
         unique_id: "next-week-championship-2025"
       }
