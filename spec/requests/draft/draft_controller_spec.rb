@@ -48,11 +48,13 @@ RSpec.describe 'Draft::DraftController', type: :request do
         end
       end
 
-      context 'during draft time (Tuesday/Wednesday) with no existing picks (pick mode)' do
+      context 'during draft window with no existing picks (pick mode)' do
         before do
-          # Mock current time to be Tuesday
-          tuesday = Time.zone.parse('2024-06-18 10:00:00') # Tuesday
-          allow(Time.zone).to receive(:now).and_return(tuesday)
+          # Set tournament to start on Friday, so draft window is Wednesday-Thursday
+          tournament.update!(start_date: Time.zone.parse('2024-06-21 00:00:00')) # Friday
+          # Mock current time to be during draft window (Thursday)
+          current_time = Time.zone.parse('2024-06-20 10:00:00') # Thursday
+          allow(Time.zone).to receive(:now).and_return(current_time)
           
           allow_any_instance_of(BusinessLogic::DraftService)
             .to receive(:get_draft_review_data).and_return({
