@@ -4,14 +4,14 @@ module Draft
     before_action :load_tournament, only: [ :submit ]
 
     def index
-      current_time = Time.zone.now
-
-      # Handle cases where its Monday (not time to draft yet) or tournament golfers not avail in DB.
+      draft_window_service = BusinessLogic::DraftWindowService.new
+      
+      # Handle cases where its not draft time yet or tournament golfers not avail in DB.
       if @golfers.blank?
         @mode = :unavailable
 
-      # Handle draft day cases
-      elsif (current_time.tuesday? || current_time.wednesday?) && @data[:picks].blank?
+      # Handle draft day cases - now dynamic based on tournament start date
+      elsif draft_window_service.draft_open? && @data[:picks].blank?
         @mode = :pick
 
       # Handle reviewing your existing picks any other time.
