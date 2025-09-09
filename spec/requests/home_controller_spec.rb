@@ -1,6 +1,9 @@
 require 'rails_helper'
 
 RSpec.describe 'HomeController', type: :request do
+  let(:user) { create(:user, :with_token) }
+  let(:auth_headers) { { 'Authorization' => "Bearer #{user.authentication_token}" } }
+
   describe 'GET /' do
     context 'when there is a current tournament' do
       let!(:tournament) do
@@ -19,12 +22,12 @@ RSpec.describe 'HomeController', type: :request do
       end
 
       it 'returns successful response' do
-        get '/'
+        get '/', headers: auth_headers, headers: auth_headers
         expect(response).to have_http_status(:ok)
       end
 
       it 'returns current tournament data' do
-        get '/'
+        get '/', headers: auth_headers, headers: auth_headers
 
         json_response = JSON.parse(response.body)
         current_tournament = json_response['current_tournament']
@@ -40,19 +43,33 @@ RSpec.describe 'HomeController', type: :request do
       end
 
       it 'includes all required tournament fields' do
-        get '/'
+        get '/', headers: auth_headers
 
         json_response = JSON.parse(response.body)
         current_tournament = json_response['current_tournament']
 
         expect(current_tournament).to include(
           'id', 'name', 'start_date', 'end_date', 
-          'week_number', 'year', 'format'
+          'week_number', 'year', 'format', 'draft_window'
         )
       end
 
+      it 'includes draft window information' do
+        get '/', headers: auth_headers
+
+        json_response = JSON.parse(response.body)
+        draft_window = json_response['current_tournament']['draft_window']
+
+        expect(draft_window).to be_present
+        expect(draft_window).to include('start', 'end', 'status', 'is_open')
+        expect(draft_window['start']).to be_present
+        expect(draft_window['end']).to be_present
+        expect(draft_window['status']).to be_in(['before_window', 'open', 'after_window'])
+        expect(draft_window['is_open']).to be_in([true, false])
+      end
+
       it 'returns app info' do
-        get '/'
+        get '/', headers: auth_headers
 
         json_response = JSON.parse(response.body)
         app_info = json_response['app_info']
@@ -63,7 +80,7 @@ RSpec.describe 'HomeController', type: :request do
       end
 
       it 'returns proper JSON structure' do
-        get '/'
+        get '/', headers: auth_headers
 
         json_response = JSON.parse(response.body)
         
@@ -80,19 +97,19 @@ RSpec.describe 'HomeController', type: :request do
       end
 
       it 'returns successful response' do
-        get '/'
+        get '/', headers: auth_headers
         expect(response).to have_http_status(:ok)
       end
 
       it 'returns null for current tournament' do
-        get '/'
+        get '/', headers: auth_headers
 
         json_response = JSON.parse(response.body)
         expect(json_response['current_tournament']).to be_nil
       end
 
       it 'still returns app info when no tournament exists' do
-        get '/'
+        get '/', headers: auth_headers
 
         json_response = JSON.parse(response.body)
         app_info = json_response['app_info']
@@ -103,7 +120,7 @@ RSpec.describe 'HomeController', type: :request do
       end
 
       it 'maintains consistent JSON structure' do
-        get '/'
+        get '/', headers: auth_headers
 
         json_response = JSON.parse(response.body)
         
@@ -131,7 +148,7 @@ RSpec.describe 'HomeController', type: :request do
       end
 
       it 'returns tournament with correct data types' do
-        get '/'
+        get '/', headers: auth_headers
 
         json_response = JSON.parse(response.body)
         current_tournament = json_response['current_tournament']
@@ -146,7 +163,7 @@ RSpec.describe 'HomeController', type: :request do
       end
 
       it 'handles different tournament formats' do
-        get '/'
+        get '/', headers: auth_headers
 
         json_response = JSON.parse(response.body)
         current_tournament = json_response['current_tournament']
@@ -155,7 +172,7 @@ RSpec.describe 'HomeController', type: :request do
       end
 
       it 'handles future tournaments' do
-        get '/'
+        get '/', headers: auth_headers
 
         json_response = JSON.parse(response.body)
         current_tournament = json_response['current_tournament']
@@ -168,7 +185,7 @@ RSpec.describe 'HomeController', type: :request do
     context 'tournament service integration' do
       it 'creates and uses TournamentService' do
         expect(BusinessLogic::TournamentService).to receive(:new).and_call_original
-        get '/'
+        get '/', headers: auth_headers
       end
 
       it 'calls current_tournament method on service' do
@@ -176,7 +193,7 @@ RSpec.describe 'HomeController', type: :request do
         allow(BusinessLogic::TournamentService).to receive(:new).and_return(tournament_service)
         expect(tournament_service).to receive(:current_tournament).and_return(nil)
 
-        get '/'
+        get '/', headers: auth_headers
       end
 
       it 'handles tournament service errors gracefully' do
@@ -189,12 +206,12 @@ RSpec.describe 'HomeController', type: :request do
 
     context 'HTTP headers and content type' do
       it 'returns JSON content type' do
-        get '/'
+        get '/', headers: auth_headers
         expect(response.content_type).to include('application/json')
       end
 
       it 'includes proper CORS headers in test environment' do
-        get '/'
+        get '/', headers: auth_headers
         # In test environment, CORS is configured for wildcard
         expect(response.headers).to include('Vary')
       end
@@ -210,14 +227,14 @@ RSpec.describe 'HomeController', type: :request do
 
       it 'responds quickly' do
         start_time = Time.current
-        get '/'
+        get '/', headers: auth_headers
         response_time = Time.current - start_time
 
         expect(response_time).to be < 1.0 # Should respond in under 1 second
       end
 
       it 'returns reasonable response size' do
-        get '/'
+        get '/', headers: auth_headers
         
         # Response should be small and efficient
         expect(response.body.length).to be < 1000 # Less than 1KB
@@ -230,7 +247,7 @@ RSpec.describe 'HomeController', type: :request do
         allow_any_instance_of(BusinessLogic::TournamentService)
           .to receive(:current_tournament).and_return(tournament)
 
-        get '/'
+        get '/', headers: auth_headers
         
         json_response = JSON.parse(response.body)
         expect(json_response['current_tournament']['name']).to eq('')
@@ -241,7 +258,7 @@ RSpec.describe 'HomeController', type: :request do
         allow_any_instance_of(BusinessLogic::TournamentService)
           .to receive(:current_tournament).and_return(tournament)
 
-        get '/'
+        get '/', headers: auth_headers
         
         json_response = JSON.parse(response.body)
         expect(json_response['current_tournament']['name']).to eq('AT&T Pebble Beach Pro-Am')
@@ -252,7 +269,7 @@ RSpec.describe 'HomeController', type: :request do
         allow_any_instance_of(BusinessLogic::TournamentService)
           .to receive(:current_tournament).and_return(tournament)
 
-        get '/'
+        get '/', headers: auth_headers
         
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
@@ -269,13 +286,13 @@ RSpec.describe 'HomeController', type: :request do
       end
 
       it 'returns valid JSON' do
-        get '/'
+        get '/', headers: auth_headers
         
         expect { JSON.parse(response.body) }.not_to raise_error
       end
 
       it 'does not include sensitive information' do
-        get '/'
+        get '/', headers: auth_headers
         
         json_response = JSON.parse(response.body)
         

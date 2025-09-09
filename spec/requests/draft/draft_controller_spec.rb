@@ -71,7 +71,7 @@ RSpec.describe 'Draft::DraftController', type: :request do
           json_response = JSON.parse(response.body)
           
           expect(json_response['mode']).to eq('pick')
-          expect(json_response['golfers']).to have(10).items
+          expect(json_response['golfers'].count).to eq(10)
           expect(json_response['tournament']).to include('name' => tournament.name)
           expect(json_response['picks']).to be_empty
           
@@ -94,11 +94,13 @@ RSpec.describe 'Draft::DraftController', type: :request do
         end
       end
 
-      context 'during draft time (Wednesday) with no existing picks' do
+      context 'during draft window start (two days before tournament)' do
         before do
-          # Mock current time to be Wednesday
-          wednesday = Time.zone.parse('2024-06-19 15:00:00') # Wednesday
-          allow(Time.zone).to receive(:now).and_return(wednesday)
+          # Set tournament to start on Wednesday, so draft window is Monday-Tuesday
+          tournament.update!(start_date: Time.zone.parse('2024-06-19 00:00:00')) # Wednesday
+          # Mock current time to be at draft window start (Monday)
+          current_time = Time.zone.parse('2024-06-17 00:00:00') # Monday
+          allow(Time.zone).to receive(:now).and_return(current_time)
           
           allow_any_instance_of(BusinessLogic::DraftService)
             .to receive(:get_draft_review_data).and_return({
@@ -108,7 +110,7 @@ RSpec.describe 'Draft::DraftController', type: :request do
             })
         end
 
-        it 'returns pick mode on Wednesday as well' do
+        it 'returns pick mode at draft window start' do
           get '/draft', headers: auth_headers
 
           expect(response).to have_http_status(:ok)
@@ -118,7 +120,33 @@ RSpec.describe 'Draft::DraftController', type: :request do
         end
       end
 
-      context 'outside draft time or with existing picks (review mode)' do
+      context 'before draft window opens (review mode)' do
+        before do
+          # Set tournament to start on Friday, draft window starts Wednesday
+          tournament.update!(start_date: Time.zone.parse('2024-06-21 00:00:00')) # Friday
+          # Mock current time to be before draft window (Tuesday)
+          current_time = Time.zone.parse('2024-06-18 10:00:00') # Tuesday
+          allow(Time.zone).to receive(:now).and_return(current_time)
+          
+          allow_any_instance_of(BusinessLogic::DraftService)
+            .to receive(:get_draft_review_data).and_return({
+              tournament_name: tournament.name,
+              year: Date.current.year,
+              picks: []
+            })
+        end
+
+        it 'returns review mode before draft window opens' do
+          get '/draft', headers: auth_headers
+
+          expect(response).to have_http_status(:ok)
+          json_response = JSON.parse(response.body)
+          
+          expect(json_response['mode']).to eq('review')
+        end
+      end
+
+      context 'outside draft window (review mode)' do
         let!(:existing_picks) do
           create_list(:match_pick, 3, 
                      user_id: user.id, 
@@ -127,9 +155,11 @@ RSpec.describe 'Draft::DraftController', type: :request do
         end
 
         before do
-          # Mock current time to be Thursday (outside draft window)
-          thursday = Time.zone.parse('2024-06-20 10:00:00') # Thursday
-          allow(Time.zone).to receive(:now).and_return(thursday)
+          # Set tournament to start on Friday, draft window ends Thursday 23:59:59
+          tournament.update!(start_date: Time.zone.parse('2024-06-21 00:00:00')) # Friday
+          # Mock current time to be after draft window (Friday morning)
+          current_time = Time.zone.parse('2024-06-21 08:00:00') # Friday
+          allow(Time.zone).to receive(:now).and_return(current_time)
           
           allow_any_instance_of(BusinessLogic::DraftService)
             .to receive(:get_draft_review_data).and_return({
@@ -146,9 +176,9 @@ RSpec.describe 'Draft::DraftController', type: :request do
           json_response = JSON.parse(response.body)
           
           expect(json_response['mode']).to eq('review')
-          expect(json_response['golfers']).to have(10).items
+          expect(json_response['golfers'].count).to eq(10)
           expect(json_response['tournament']).to include('name' => tournament.name)
-          expect(json_response['picks']).to have(3).items
+          expect(json_response['picks'].count).to eq(3)
           
           # Verify pick structure
           pick = json_response['picks'].first
@@ -156,7 +186,7 @@ RSpec.describe 'Draft::DraftController', type: :request do
         end
       end
 
-      context 'during draft time but with existing picks' do
+      context 'during draft window but with existing picks' do
         let!(:existing_picks) do
           create_list(:match_pick, 8, 
                      user_id: user.id, 
@@ -165,9 +195,11 @@ RSpec.describe 'Draft::DraftController', type: :request do
         end
 
         before do
-          # Mock current time to be Tuesday (draft time)
-          tuesday = Time.zone.parse('2024-06-18 10:00:00') # Tuesday
-          allow(Time.zone).to receive(:now).and_return(tuesday)
+          # Set tournament to start on Saturday, so draft window is Thursday-Friday
+          tournament.update!(start_date: Time.zone.parse('2024-06-22 00:00:00')) # Saturday
+          # Mock current time to be during draft window (Thursday)
+          current_time = Time.zone.parse('2024-06-20 10:00:00') # Thursday
+          allow(Time.zone).to receive(:now).and_return(current_time)
           
           allow_any_instance_of(BusinessLogic::DraftService)
             .to receive(:get_draft_review_data).and_return({
@@ -177,27 +209,27 @@ RSpec.describe 'Draft::DraftController', type: :request do
             })
         end
 
-        it 'returns review mode even during draft time if picks exist' do
+        it 'returns review mode even during draft window if picks exist' do
           get '/draft', headers: auth_headers
 
           expect(response).to have_http_status(:ok)
           json_response = JSON.parse(response.body)
           
           expect(json_response['mode']).to eq('review')
-          expect(json_response['picks']).to have(8).items
+          expect(json_response['picks'].count).to eq(8)
         end
       end
     end
   end
 
-  describe 'POST /draft' do
+  describe 'POST /draft/submit' do
     let(:valid_picks) do
       golfers[0..7].map { |golfer| { golfer_id: golfer.id } }
     end
 
     context 'without authentication' do
       it 'returns unauthorized' do
-        post '/draft', params: { picks: valid_picks }, as: :json
+        post '/draft/submit', params: { picks: valid_picks }, as: :json
         expect(response).to have_http_status(:unauthorized)
       end
     end
@@ -206,7 +238,7 @@ RSpec.describe 'Draft::DraftController', type: :request do
       context 'with valid picks data' do
         it 'creates match picks successfully' do
           expect do
-            post '/draft', params: { picks: valid_picks }, headers: auth_headers, as: :json
+            post '/draft/submit', params: { picks: valid_picks }, headers: auth_headers, as: :json
           end.to change(MatchPick, :count).by(8)
 
           expect(response).to have_http_status(:ok)
@@ -215,7 +247,7 @@ RSpec.describe 'Draft::DraftController', type: :request do
         end
 
         it 'creates picks with correct priorities and golfers' do
-          post '/draft', params: { picks: valid_picks }, headers: auth_headers, as: :json
+          post '/draft/submit', params: { picks: valid_picks }, headers: auth_headers, as: :json
 
           created_picks = MatchPick.where(user_id: user.id, tournament: tournament).order(:priority)
           expect(created_picks.count).to eq(8)
@@ -237,7 +269,7 @@ RSpec.describe 'Draft::DraftController', type: :request do
                                      golfer_id: golfers.last.id)
 
           expect do
-            post '/draft', params: { picks: valid_picks }, headers: auth_headers, as: :json
+            post '/draft/submit', params: { picks: valid_picks }, headers: auth_headers, as: :json
           end.to change(MatchPick, :count).by(5) # Removes 3, adds 8 = net +5
 
           # Should only have the new picks
@@ -253,7 +285,7 @@ RSpec.describe 'Draft::DraftController', type: :request do
         it 'handles string keys in pick data' do
           string_key_picks = golfers[0..7].map { |golfer| { "golfer_id" => golfer.id } }
           
-          post '/draft', params: { picks: string_key_picks }, headers: auth_headers, as: :json
+          post '/draft/submit', params: { picks: string_key_picks }, headers: auth_headers, as: :json
           
           expect(response).to have_http_status(:ok)
           expect(MatchPick.where(user_id: user.id, tournament: tournament).count).to eq(8)
@@ -262,7 +294,7 @@ RSpec.describe 'Draft::DraftController', type: :request do
 
       context 'with invalid picks data' do
         it 'handles empty picks array' do
-          post '/draft', params: { picks: [] }, headers: auth_headers, as: :json
+          post '/draft/submit', params: { picks: [] }, headers: auth_headers, as: :json
 
           expect(response).to have_http_status(:ok)
           expect(MatchPick.where(user_id: user.id, tournament: tournament).count).to eq(0)
@@ -271,7 +303,7 @@ RSpec.describe 'Draft::DraftController', type: :request do
         it 'handles picks with missing golfer_id' do
           invalid_picks = [{ golfer_id: golfers.first.id }, { priority: 2 }]
           
-          post '/draft', params: { picks: invalid_picks }, headers: auth_headers, as: :json
+          post '/draft/submit', params: { picks: invalid_picks }, headers: auth_headers, as: :json
           
           expect(response).to have_http_status(:ok)
           # Only creates picks with valid golfer_id
@@ -281,13 +313,15 @@ RSpec.describe 'Draft::DraftController', type: :request do
         it 'handles picks with invalid golfer_id' do
           invalid_picks = [{ golfer_id: 99999 }] # Non-existent golfer
           
-          expect do
-            post '/draft', params: { picks: invalid_picks }, headers: auth_headers, as: :json
-          end.to raise_error(ActiveRecord::InvalidForeignKey).or raise_error(ActiveRecord::RecordInvalid)
+          post '/draft/submit', params: { picks: invalid_picks }, headers: auth_headers, as: :json
+          
+          expect(response).to have_http_status(:unprocessable_entity)
+          json_response = JSON.parse(response.body)
+          expect(json_response['error']).to include('Error submitting picks')
         end
 
         it 'handles missing picks parameter' do
-          post '/draft', params: {}, headers: auth_headers, as: :json
+          post '/draft/submit', params: {}, headers: auth_headers, as: :json
           
           expect(response).to have_http_status(:ok)
           expect(MatchPick.where(user_id: user.id, tournament: tournament).count).to eq(0)
@@ -298,7 +332,7 @@ RSpec.describe 'Draft::DraftController', type: :request do
         it 'returns error response when database operation fails' do
           allow_any_instance_of(MatchPick).to receive(:save!).and_raise(StandardError.new("Database error"))
           
-          post '/draft', params: { picks: valid_picks }, headers: auth_headers, as: :json
+          post '/draft/submit', params: { picks: valid_picks }, headers: auth_headers, as: :json
           
           expect(response).to have_http_status(:unprocessable_entity)
           json_response = JSON.parse(response.body)
@@ -312,8 +346,8 @@ RSpec.describe 'Draft::DraftController', type: :request do
       let(:other_auth_headers) { { 'Authorization' => "Bearer #{other_user.authentication_token}" } }
 
       it 'creates picks for the correct user' do
-        post '/draft', params: { picks: valid_picks }, headers: auth_headers, as: :json
-        post '/draft', params: { picks: valid_picks[0..2] }, headers: other_auth_headers, as: :json
+        post '/draft/submit', params: { picks: valid_picks }, headers: auth_headers, as: :json
+        post '/draft/submit', params: { picks: valid_picks[0..2] }, headers: other_auth_headers, as: :json
 
         user_picks = MatchPick.where(user_id: user.id, tournament: tournament)
         other_user_picks = MatchPick.where(user_id: other_user.id, tournament: tournament)
@@ -326,11 +360,11 @@ RSpec.describe 'Draft::DraftController', type: :request do
 
       it 'does not affect other users picks when creating new ones' do
         # Other user creates picks first
-        post '/draft', params: { picks: valid_picks[0..4] }, headers: other_auth_headers, as: :json
+        post '/draft/submit', params: { picks: valid_picks[0..4] }, headers: other_auth_headers, as: :json
         other_user_picks_count = MatchPick.where(user_id: other_user.id).count
         
         # Current user creates picks
-        post '/draft', params: { picks: valid_picks }, headers: auth_headers, as: :json
+        post '/draft/submit', params: { picks: valid_picks }, headers: auth_headers, as: :json
 
         # Other user's picks should be unchanged
         expect(MatchPick.where(user_id: other_user.id).count).to eq(other_user_picks_count)
@@ -341,8 +375,11 @@ RSpec.describe 'Draft::DraftController', type: :request do
 
   describe 'JSON response structure' do
     before do
-      tuesday = Time.zone.parse('2024-06-18 10:00:00') # Tuesday
-      allow(Time.zone).to receive(:now).and_return(tuesday)
+      # Set tournament to start on Friday, so draft window is Wednesday-Thursday
+      tournament.update!(start_date: Time.zone.parse('2024-06-21 00:00:00')) # Friday
+      # Mock current time to be during draft window
+      current_time = Time.zone.parse('2024-06-20 10:00:00') # Thursday
+      allow(Time.zone).to receive(:now).and_return(current_time)
     end
 
     it 'returns consistent JSON structure for all modes' do
