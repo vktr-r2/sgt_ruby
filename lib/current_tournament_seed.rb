@@ -9,34 +9,34 @@ class CurrentTournamentSeed
     # Create current and upcoming tournaments for testing
     tournaments = [
       {
-        name: "Test Championship",
+        name: "Past Championship",
         start_date: 1.week.ago,
         end_date: 4.days.ago,
-        week_number: 34,
-        year: 2025,
+        week_number: 1.week.ago.strftime("%V").to_i,
+        year: Date.current.year,
         format: "stroke",
-        tournament_id: "test-championship-2025",
-        unique_id: "test-championship-2025"
+        tournament_id: "past-championship-#{Date.current.year}",
+        unique_id: "past-championship-#{Date.current.year}"
       },
       {
-        name: "Current Tournament",
-        start_date: Date.current - 2.days,
-        end_date: Date.current + 1.day,
-        week_number: 35,
-        year: 2025,
+        name: "Draft Window Open Tournament",
+        start_date: Date.current + 2.days,
+        end_date: Date.current + 5.days,
+        week_number: (Date.current + 2.days).strftime("%V").to_i,
+        year: Date.current.year,
         format: "stroke", 
-        tournament_id: "current-tournament-2025",
-        unique_id: "current-tournament-2025"
+        tournament_id: "draft-window-open-#{Date.current.year}",
+        unique_id: "draft-window-open-#{Date.current.year}"
       },
       {
-        name: "Next Week Championship",
+        name: "Future Championship",
         start_date: 1.week.from_now,
         end_date: 1.week.from_now + 3.days,
-        week_number: 36,
-        year: 2025,
+        week_number: 1.week.from_now.strftime("%V").to_i,
+        year: Date.current.year,
         format: "stroke",
-        tournament_id: "next-week-championship-2025",
-        unique_id: "next-week-championship-2025"
+        tournament_id: "future-championship-#{Date.current.year}",
+        unique_id: "future-championship-#{Date.current.year}"
       }
     ]
     
@@ -68,12 +68,17 @@ class CurrentTournamentSeed
         { f_name: "Hideki", l_name: "Matsuyama" }
       ]
       
-      golfers.each do |golfer_data|
-        Golfer.create!(
+      golfers.each_with_index do |golfer_data, index|
+        golfer = Golfer.find_or_initialize_by(
           f_name: golfer_data[:f_name],
-          l_name: golfer_data[:l_name],
-          last_active_tourney: tournament.unique_id
+          l_name: golfer_data[:l_name]
         )
+        # Only update last_active_tourney for the draft window open tournament
+        if tournament.name == "Draft Window Open Tournament"
+          golfer.last_active_tourney = tournament.unique_id
+        end
+        golfer.source_id ||= "seed-#{golfer_data[:f_name].downcase}-#{golfer_data[:l_name].downcase}-#{index + 1}"
+        golfer.save!
       end
       
       puts "Created #{golfers.count} golfers for #{tournament.name}"
