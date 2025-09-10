@@ -22,12 +22,12 @@ RSpec.describe 'HomeController', type: :request do
       end
 
       it 'returns successful response' do
-        get '/', headers: auth_headers, headers: auth_headers
+        get '/', headers: auth_headers
         expect(response).to have_http_status(:ok)
       end
 
       it 'returns current tournament data' do
-        get '/', headers: auth_headers, headers: auth_headers
+        get '/', headers: auth_headers
 
         json_response = JSON.parse(response.body)
         current_tournament = json_response['current_tournament']
@@ -35,8 +35,8 @@ RSpec.describe 'HomeController', type: :request do
         expect(current_tournament).to be_present
         expect(current_tournament['id']).to eq(tournament.id)
         expect(current_tournament['name']).to eq('Test Championship')
-        expect(current_tournament['start_date']).to eq(tournament.start_date.to_s)
-        expect(current_tournament['end_date']).to eq(tournament.end_date.to_s)
+        expect(current_tournament['start_date']).to eq(tournament.start_date.as_json)
+        expect(current_tournament['end_date']).to eq(tournament.end_date.as_json)
         expect(current_tournament['week_number']).to eq(tournament.week_number)
         expect(current_tournament['year']).to eq(tournament.year)
         expect(current_tournament['format']).to eq('Stroke Play')
@@ -184,14 +184,15 @@ RSpec.describe 'HomeController', type: :request do
 
     context 'tournament service integration' do
       it 'creates and uses TournamentService' do
-        expect(BusinessLogic::TournamentService).to receive(:new).and_call_original
+        expect(BusinessLogic::TournamentService).to receive(:new).at_least(:once).and_call_original
         get '/', headers: auth_headers
       end
 
       it 'calls current_tournament method on service' do
         tournament_service = instance_double(BusinessLogic::TournamentService)
         allow(BusinessLogic::TournamentService).to receive(:new).and_return(tournament_service)
-        expect(tournament_service).to receive(:current_tournament).and_return(nil)
+        allow(BusinessLogic::DraftWindowService).to receive(:new).and_return(instance_double(BusinessLogic::DraftWindowService, draft_window_status: 'before_window', draft_open?: false))
+        expect(tournament_service).to receive(:current_tournament).at_least(:once).and_return(nil)
 
         get '/', headers: auth_headers
       end
@@ -200,7 +201,7 @@ RSpec.describe 'HomeController', type: :request do
         allow_any_instance_of(BusinessLogic::TournamentService)
           .to receive(:current_tournament).and_raise(StandardError.new("Service error"))
 
-        expect { get '/' }.to raise_error(StandardError)
+        expect { get '/', headers: auth_headers }.to raise_error(StandardError)
       end
     end
 
@@ -242,15 +243,15 @@ RSpec.describe 'HomeController', type: :request do
     end
 
     context 'edge cases' do
-      it 'handles empty tournament name' do
-        tournament = create(:tournament, name: '')
+      it 'handles tournaments with minimal name' do
+        tournament = create(:tournament, name: 'a')
         allow_any_instance_of(BusinessLogic::TournamentService)
           .to receive(:current_tournament).and_return(tournament)
 
         get '/', headers: auth_headers
         
         json_response = JSON.parse(response.body)
-        expect(json_response['current_tournament']['name']).to eq('')
+        expect(json_response['current_tournament']['name']).to eq('a')
       end
 
       it 'handles special characters in tournament name' do

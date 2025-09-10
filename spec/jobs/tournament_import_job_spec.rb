@@ -7,7 +7,10 @@ RSpec.describe TournamentImportJob, type: :job do
   let(:tournament_importer) { instance_double(Importers::TournamentImporter, process: true) }
 
   before do
-    allow(ApplicationHelper::TournamentEvaluations).to receive(:determine_current_tourn_id).and_return(tournament_id)
+    tournament_service_double = instance_double(BusinessLogic::TournamentService)
+    allow(BusinessLogic::TournamentService).to receive(:new).and_return(tournament_service_double)
+    allow(tournament_service_double).to receive(:current_tournament_id).and_return(tournament_id)
+    
     allow(RapidApi::TournamentClient).to receive(:new).and_return(tournament_client)
     allow(tournament_client).to receive(:fetch).with(tournament_id).and_return(api_data)
     allow(Importers::TournamentImporter).to receive(:new).with(api_data).and_return(tournament_importer)
@@ -16,7 +19,7 @@ RSpec.describe TournamentImportJob, type: :job do
   it "fetches API data and processes tournament import" do
     described_class.perform_now
 
-    expect(ApplicationHelper::TournamentEvaluations).to have_received(:determine_current_tourn_id)
+    expect(BusinessLogic::TournamentService).to have_received(:new)
     expect(tournament_client).to have_received(:fetch).with(tournament_id)
     expect(Importers::TournamentImporter).to have_received(:new).with(api_data)
     expect(tournament_importer).to have_received(:process)
