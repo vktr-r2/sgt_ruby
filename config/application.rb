@@ -41,6 +41,9 @@ module Sgt
     config.active_record.default_timezone = :utc
     # config.eager_load_paths << Rails.root.join("extras")
     
+    # Golfer selection limit per season
+    SCOTTIE_SCHEFFLER_LIMIT = 3
+    
 
     config.generators do |g|
       g.factory_bot dir: 'spec/factories'
