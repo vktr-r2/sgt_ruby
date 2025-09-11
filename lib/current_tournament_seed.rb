@@ -5,18 +5,39 @@ class CurrentTournamentSeed
     # Clear existing data
     Tournament.destroy_all
     Golfer.destroy_all
+    MatchPick.destroy_all
     
     # Create current and upcoming tournaments for testing
     tournaments = [
       {
-        name: "Past Championship",
+        name: "Past Championship 1",
+        start_date: 3.weeks.ago,
+        end_date: 3.weeks.ago + 3.days,
+        week_number: 3.weeks.ago.strftime("%V").to_i,
+        year: Date.current.year,
+        format: "stroke",
+        tournament_id: "past-championship-1-#{Date.current.year}",
+        unique_id: "past-championship-1-#{Date.current.year}"
+      },
+      {
+        name: "Past Championship 2", 
+        start_date: 2.weeks.ago,
+        end_date: 2.weeks.ago + 3.days,
+        week_number: 2.weeks.ago.strftime("%V").to_i,
+        year: Date.current.year,
+        format: "stroke",
+        tournament_id: "past-championship-2-#{Date.current.year}",
+        unique_id: "past-championship-2-#{Date.current.year}"
+      },
+      {
+        name: "Past Championship 3",
         start_date: 1.week.ago,
         end_date: 4.days.ago,
         week_number: 1.week.ago.strftime("%V").to_i,
         year: Date.current.year,
         format: "stroke",
-        tournament_id: "past-championship-#{Date.current.year}",
-        unique_id: "past-championship-#{Date.current.year}"
+        tournament_id: "past-championship-3-#{Date.current.year}",
+        unique_id: "past-championship-3-#{Date.current.year}"
       },
       {
         name: "Draft Window Open Tournament",
@@ -84,6 +105,51 @@ class CurrentTournamentSeed
       puts "Created #{golfers.count} golfers for #{tournament.name}"
     end
     
+    # Create match picks for user 1 (Scottie Scheffler in past tournaments for testing limit)
+    create_test_match_picks
+    
     puts "Tournament seeding completed!"
+  end
+
+  private
+
+  def self.create_test_match_picks
+    puts "Creating test match picks..."
+    
+    # Find Scottie Scheffler golfer
+    scottie = Golfer.find_by(f_name: "Scottie", l_name: "Scheffler")
+    return unless scottie
+    
+    # Find user 1 (first user in the system)
+    user_1 = User.first
+    return unless user_1
+    
+    # Find the three past tournaments
+    past_tournaments = Tournament.where("name LIKE ?", "Past Championship%").order(:start_date)
+    
+    past_tournaments.each_with_index do |tournament, index|
+      # Create a pick for Scottie Scheffler in each past tournament
+      MatchPick.create!(
+        user_id: user_1.id,
+        tournament_id: tournament.id,
+        golfer_id: scottie.id,
+        priority: 1,
+        drafted: true
+      )
+      
+      # Create some additional picks to make it look realistic (7 more golfers)
+      other_golfers = Golfer.where.not(id: scottie.id).limit(7)
+      other_golfers.each_with_index do |golfer, golfer_index|
+        MatchPick.create!(
+          user_id: user_1.id,
+          tournament_id: tournament.id,
+          golfer_id: golfer.id,
+          priority: golfer_index + 2,
+          drafted: true
+        )
+      end
+      
+      puts "Created 8 picks for user #{user_1.name} in #{tournament.name} (including Scottie Scheffler)"
+    end
   end
 end
