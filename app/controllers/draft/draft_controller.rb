@@ -31,6 +31,19 @@ module Draft
       tournament_id = @tournament.id
       picks_data = params[:picks] || []
       
+      # Extract golfer IDs for validation
+      golfer_ids = picks_data.map { |pick| pick[:golfer_id] || pick["golfer_id"] }.compact
+      
+      # Validate golfer selection limits
+      validation_service = BusinessLogic::GolferLimitValidationService.new(current_user.id, golfer_ids)
+      validation_result = validation_service.validate
+      
+      unless validation_result[:valid]
+        # Return the first violation error
+        first_violation = validation_result[:violations].first
+        return render json: { error: first_violation[:message] }, status: :unprocessable_entity
+      end
+      
       # Clear existing picks first
       MatchPick.where(user_id: current_user.id, tournament_id: tournament_id).destroy_all
       
@@ -43,7 +56,8 @@ module Draft
             user_id: current_user.id,
             tournament_id: tournament_id,
             golfer_id: golfer_id,
-            priority: index + 1
+            priority: index + 1,
+            drafted: true
           )
         end
       end
