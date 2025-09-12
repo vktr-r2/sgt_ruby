@@ -339,6 +339,149 @@ RSpec.describe 'Draft::DraftController', type: :request do
           expect(json_response['error']).to include('Error submitting picks')
         end
       end
+
+      context 'golfer selection limit validation' do
+        let(:scottie) { create(:golfer, f_name: "Scottie", l_name: "Scheffler") }
+        let(:current_year) { Date.current.year }
+
+        before do
+          # Replace first golfer in test data with Scottie
+          golfers[0] = scottie
+        end
+
+        context 'when user has not exceeded the limit' do
+          before do
+            # Create 2 previous picks for Scottie (under the limit)
+            past_tournaments = create_list(:tournament, 2, year: current_year)
+            past_tournaments.each do |past_tournament|
+              create(:match_pick, 
+                     user: user, 
+                     tournament: past_tournament, 
+                     golfer: scottie, 
+                     drafted: true)
+            end
+          end
+
+          it 'allows the submission' do
+            picks_with_scottie = [{ golfer_id: scottie.id }] + 
+                               golfers[1..7].map { |g| { golfer_id: g.id } }
+
+            expect do
+              post '/draft/submit', params: { picks: picks_with_scottie }, headers: auth_headers, as: :json
+            end.to change(MatchPick, :count).by(8)
+
+            expect(response).to have_http_status(:ok)
+            json_response = JSON.parse(response.body)
+            expect(json_response['message']).to eq('Picks submitted successfully!')
+          end
+        end
+
+        context 'when user has already reached the limit' do
+          before do
+            # Create exactly GOLFER_SELECTION_LIMIT picks for Scottie in current year
+            past_tournaments = create_list(:tournament, MatchPick::GOLFER_SELECTION_LIMIT, year: current_year)
+            past_tournaments.each do |past_tournament|
+              create(:match_pick, 
+                     user: user, 
+                     tournament: past_tournament, 
+                     golfer: scottie, 
+                     drafted: true)
+            end
+          end
+
+          it 'blocks the submission with limit violation error' do
+            picks_with_scottie = [{ golfer_id: scottie.id }] + 
+                               golfers[1..7].map { |g| { golfer_id: g.id } }
+
+            expect do
+              post '/draft/submit', params: { picks: picks_with_scottie }, headers: auth_headers, as: :json
+            end.not_to change(MatchPick, :count)
+
+            expect(response).to have_http_status(:unprocessable_entity)
+            json_response = JSON.parse(response.body)
+            expect(json_response['error']).to include('Scottie Scheffler rule violation')
+            expect(json_response['error']).to include('Scottie Scheffler')
+            expect(json_response['error']).to include("#{MatchPick::GOLFER_SELECTION_LIMIT} times this year")
+          end
+        end
+
+        context 'when picks include multiple violations' do
+          let(:rory) { create(:golfer, f_name: "Rory", l_name: "McIlroy") }
+
+          before do
+            # Replace second golfer with Rory
+            golfers[1] = rory
+
+            # Create GOLFER_SELECTION_LIMIT picks for both golfers
+            past_tournaments = create_list(:tournament, MatchPick::GOLFER_SELECTION_LIMIT, year: current_year)
+            past_tournaments.each do |past_tournament|
+              create(:match_pick, user: user, tournament: past_tournament, golfer: scottie, drafted: true)
+              create(:match_pick, user: user, tournament: past_tournament, golfer: rory, drafted: true)
+            end
+          end
+
+          it 'returns the first violation error' do
+            picks_with_violations = [{ golfer_id: scottie.id }, { golfer_id: rory.id }] + 
+                                  golfers[2..7].map { |g| { golfer_id: g.id } }
+
+            post '/draft/submit', params: { picks: picks_with_violations }, headers: auth_headers, as: :json
+
+            expect(response).to have_http_status(:unprocessable_entity)
+            json_response = JSON.parse(response.body)
+            expect(json_response['error']).to include('rule violation')
+            expect(json_response['error']).to match(/Scottie Scheffler|Rory McIlroy/)
+          end
+        end
+
+        context 'when limit validation passes but other errors occur' do
+          before do
+            # Create 1 previous pick (under limit)
+            past_tournament = create(:tournament, year: current_year)
+            create(:match_pick, user: user, tournament: past_tournament, golfer: scottie, drafted: true)
+
+            # Mock database error after validation
+            allow_any_instance_of(MatchPick).to receive(:save!).and_raise(StandardError.new("Database error"))
+          end
+
+          it 'processes validation first, then handles database error' do
+            picks_with_scottie = [{ golfer_id: scottie.id }] + 
+                               golfers[1..7].map { |g| { golfer_id: g.id } }
+
+            post '/draft/submit', params: { picks: picks_with_scottie }, headers: auth_headers, as: :json
+
+            expect(response).to have_http_status(:unprocessable_entity)
+            json_response = JSON.parse(response.body)
+            # Should get database error, not limit violation (validation passed)
+            expect(json_response['error']).to include('Error submitting picks')
+            expect(json_response['error']).not_to include('rule violation')
+          end
+        end
+
+        context 'when previous picks have drafted: false' do
+          before do
+            # Create GOLFER_SELECTION_LIMIT picks with drafted: false (should not count)
+            past_tournaments = create_list(:tournament, MatchPick::GOLFER_SELECTION_LIMIT, year: current_year)
+            past_tournaments.each do |past_tournament|
+              create(:match_pick, 
+                     user: user, 
+                     tournament: past_tournament, 
+                     golfer: scottie, 
+                     drafted: false)
+            end
+          end
+
+          it 'allows the submission (non-drafted picks do not count)' do
+            picks_with_scottie = [{ golfer_id: scottie.id }] + 
+                               golfers[1..7].map { |g| { golfer_id: g.id } }
+
+            post '/draft/submit', params: { picks: picks_with_scottie }, headers: auth_headers, as: :json
+
+            expect(response).to have_http_status(:ok)
+            json_response = JSON.parse(response.body)
+            expect(json_response['message']).to eq('Picks submitted successfully!')
+          end
+        end
+      end
     end
 
     context 'with different users' do
