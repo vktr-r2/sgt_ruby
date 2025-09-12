@@ -19,13 +19,13 @@ module BusinessLogic
       # Check each current pick against the limit
       @current_picks.each do |golfer_id|
         existing_count = existing_picks.count(golfer_id)
-        if existing_count >= SCOTTIE_SCHEFFLER_LIMIT
+        if existing_count >= MatchPick::GOLFER_SELECTION_LIMIT
           golfer_name = get_golfer_name(golfer_id)
           violations << {
             golfer_id: golfer_id,
             golfer_name: golfer_name,
             current_count: existing_count,
-            message: "Scottie Scheffler rule violation: You have already selected #{golfer_name} #{SCOTTIE_SCHEFFLER_LIMIT} times this year, please choose another golfer"
+            message: "Scottie Scheffler rule violation: You have already selected #{golfer_name} #{MatchPick::GOLFER_SELECTION_LIMIT} times this year, please choose another golfer"
           }
         end
       end
