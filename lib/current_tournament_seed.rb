@@ -128,28 +128,23 @@ class CurrentTournamentSeed
     past_tournaments = Tournament.where("name LIKE ?", "Past Championship%").order(:start_date)
     
     past_tournaments.each_with_index do |tournament, index|
-      # Create a pick for Scottie Scheffler in each past tournament
-      MatchPick.create!(
-        user_id: user_1.id,
-        tournament_id: tournament.id,
-        golfer_id: scottie.id,
-        priority: 1,
-        drafted: true
-      )
+      # Create picks for all 8 golfers
+      all_golfers = [scottie] + Golfer.where.not(id: scottie.id).limit(7)
       
-      # Create some additional picks to make it look realistic (7 more golfers)
-      other_golfers = Golfer.where.not(id: scottie.id).limit(7)
-      other_golfers.each_with_index do |golfer, golfer_index|
+      all_golfers.each_with_index do |golfer, golfer_index|
+        # Only first 2 picks (priorities 1 & 2) get drafted: true
+        is_drafted = golfer_index < 2
+        
         MatchPick.create!(
           user_id: user_1.id,
           tournament_id: tournament.id,
           golfer_id: golfer.id,
-          priority: golfer_index + 2,
-          drafted: true
+          priority: golfer_index + 1,
+          drafted: is_drafted
         )
       end
       
-      puts "Created 8 picks for user #{user_1.name} in #{tournament.name} (including Scottie Scheffler)"
+      puts "Created 8 picks for user #{user_1.name} in #{tournament.name} (Scottie Scheffler priority 1, drafted: true)"
     end
   end
 end
