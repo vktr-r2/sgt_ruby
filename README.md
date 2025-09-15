@@ -43,15 +43,46 @@ Things you may want to cover:
 
 
 IMPROVE ADMIN FUNCTIONALITY 
-
 - Adding a Golfer should ask you which tournament they should be linked to (DONE)
     - Should give me a drop down menu with available tournaments that already exist in the database ()
 - Adding a User should ask me to only input a name, email, and an unencrypted password. On submit, we should encrypt the password
+- Basically make all manual DB processes more user friendly
 
+MISC UPDATES
 - Add password reset capabilities
-- Add reminder email services
-- Add the scottie scheffler rule 
-- Dynamic draft:
-    - Make draft window start two days before tournament is set to start, not just Tues + Wed
-    - Make draft window only open when the tournament type is 'stroke'
-    - Check live API response for season schedule to ensure it only brings in tournaments from Jan - TOUR Championship in Aug/Sept
+- Add draft reminder email services
+
+MATCH FEATURES
+- Pull in tourn score data
+    - API call needs to be built
+    - Data mapper needs to be built
+    - Cron job twice daily IF tournament is active that day
+    - Save player scores
+    - Publish on match page
+- Build match page
+    - Assign the drafted golfers to each user accordingly
+    - Show the priorities picked by each user for transparency
+- Scoring
+    - Determine a winner based on strokes
+    - Add logic to break a tie
+    - Add handling for a cut player
+
+DRAFT FEATURES
+- Set the draft order based on the results of the last tournament
+- Add to draft page a reminder of the order of priority for that weeks draft
+
+SEASON FEATURES
+- Tally weekly results
+    - Scoring for tourn results + picking a winner + winning a major
+- Build season page
+- Import previous season data?
+
+DASHBOARD
+- Msgs/memes board
+
+DATA BACKUP SERVICE
+- TBD
+
+FINAL CLEANUP
+- Stop prod deployments from reseting the DB each time!
+- Security vulnerabilities to be addresseds
