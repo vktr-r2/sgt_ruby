@@ -104,6 +104,48 @@ RSpec.describe BusinessLogic::TournamentService do
         expect(service.current_tournament).to eq(current_year_tournament)
       end
     end
+
+    context 'with no tournaments for current week but tournament in draft window' do
+      let!(:draft_window_tournament) do
+        # Tournament starts in 2 days (within draft window)
+        start_date = test_date + 2.days
+        create(:tournament,
+               week_number: start_date.strftime("%V").to_i,
+               year: test_date.year,
+               start_date: start_date,
+               end_date: start_date + 3.days,
+               name: 'Draft Window Tournament')
+      end
+
+      it 'returns the tournament in draft window' do
+        # Mock Time.zone.now to return the test_date
+        allow(Time.zone).to receive(:now).and_return(test_date.beginning_of_day)
+        expect(service.current_tournament).to eq(draft_window_tournament)
+      end
+    end
+
+    context 'with tournaments in both current week and draft window' do
+      let!(:current_week_tournament) do
+        create(:tournament,
+               week_number: test_date.strftime("%V").to_i,
+               year: test_date.year,
+               name: 'Current Week Tournament')
+      end
+
+      let!(:draft_window_tournament) do
+        start_date = test_date + 2.days
+        create(:tournament,
+               week_number: start_date.strftime("%V").to_i,
+               year: test_date.year,
+               start_date: start_date,
+               end_date: start_date + 3.days,
+               name: 'Draft Window Tournament')
+      end
+
+      it 'prioritizes current week tournament over draft window tournament' do
+        expect(service.current_tournament).to eq(current_week_tournament)
+      end
+    end
   end
 
   describe '#current_tournament_id' do
