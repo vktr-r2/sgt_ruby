@@ -312,5 +312,101 @@ RSpec.describe BusinessLogic::DraftService do
       # User without picks should now have 8 randomized picks
       expect(MatchPick.where(user_id: user_without_picks.id).count).to eq(8)
     end
+
+    it 'handles complete draft edit workflow during draft window' do
+      # Setup tournament with draft window open
+      tournament.update!(start_date: Time.zone.parse('2024-06-21 00:00:00')) # Friday
+      current_time = Time.zone.parse('2024-06-20 10:00:00') # Thursday during draft window
+      allow(Time.zone).to receive(:now).and_return(current_time)
+      
+      # Create initial picks for user
+      initial_picks = create_list(:match_pick, 8, 
+                                 user_id: user.id, 
+                                 tournament: tournament,
+                                 golfer_id: golfers.first.id,
+                                 drafted: true)
+      
+      # Verify initial state
+      expect(MatchPick.where(user_id: user.id, tournament: tournament).count).to eq(8)
+      
+      # Get draft review data - should show existing picks
+      draft_data = service.get_draft_review_data
+      expect(draft_data[:picks].count).to eq(8)
+      expect(draft_data[:picks].first.golfer_id).to eq(golfers.first.id)
+      
+      # Simulate editing picks (destroy existing and create new ones)
+      MatchPick.where(user_id: user.id, tournament_id: tournament.id).destroy_all
+      
+      # Create new picks with different golfers
+      new_golfer_picks = golfers[5..7] + golfers[0..4]
+      new_golfer_picks.each_with_index do |golfer, index|
+        MatchPick.create!(
+          user_id: user.id,
+          tournament_id: tournament.id,
+          golfer_id: golfer.id,
+          priority: index + 1,
+          drafted: true
+        )
+      end
+      
+      # Verify edit was successful
+      updated_picks = MatchPick.where(user_id: user.id, tournament: tournament).order(:priority)
+      expect(updated_picks.count).to eq(8)
+      expect(updated_picks.first.golfer_id).to eq(golfers[5].id)
+      expect(updated_picks.last.golfer_id).to eq(golfers[4].id)
+      
+      # Verify old picks are completely gone
+      initial_picks.each do |old_pick|
+        expect { old_pick.reload }.to raise_error(ActiveRecord::RecordNotFound)
+      end
+      
+      # Verify draft review data reflects the changes
+      updated_draft_data = service.get_draft_review_data
+      expect(updated_draft_data[:picks].count).to eq(8)
+      expect(updated_draft_data[:picks].first.golfer_id).to eq(golfers[5].id)
+    end
+
+    it 'handles draft edit workflow with golfer selection limit validation' do
+      # Setup tournament during draft window
+      tournament.update!(start_date: Time.zone.parse('2024-06-21 00:00:00'))
+      current_time = Time.zone.parse('2024-06-20 10:00:00')
+      allow(Time.zone).to receive(:now).and_return(current_time)
+      
+      # Create a special golfer (like Scottie Scheffler)
+      limited_golfer = create(:golfer, f_name: "Scottie", l_name: "Scheffler", last_active_tourney: tournament.unique_id)
+      
+      # Create picks that already use the limited golfer GOLFER_SELECTION_LIMIT times this year
+      past_tournaments = create_list(:tournament, MatchPick::GOLFER_SELECTION_LIMIT, year: Date.current.year)
+      past_tournaments.each do |past_tournament|
+        create(:match_pick, 
+               user: user, 
+               tournament: past_tournament, 
+               golfer: limited_golfer, 
+               drafted: true)
+      end
+      
+      # Create initial picks for current tournament (without limited golfer)
+      initial_picks = create_list(:match_pick, 8, 
+                                 user_id: user.id, 
+                                 tournament: tournament,
+                                 golfer_id: golfers.first.id,
+                                 drafted: true)
+      
+      # Try to edit to include the limited golfer (should fail validation in real scenario)
+      golfer_ids = [limited_golfer.id] + golfers[1..7].map(&:id)
+      
+      # This simulates what would happen in the controller's golfer limit validation
+      validation_service = BusinessLogic::GolferLimitValidationService.new(user.id, golfer_ids)
+      validation_result = validation_service.validate
+      
+      # Should fail validation
+      expect(validation_result[:valid]).to be false
+      expect(validation_result[:violations]).not_to be_empty
+      expect(validation_result[:violations].first[:message]).to include('Scottie Scheffler rule violation')
+      
+      # Original picks should remain unchanged since edit would be blocked
+      expect(MatchPick.where(user_id: user.id, tournament: tournament).count).to eq(8)
+      expect(MatchPick.where(user_id: user.id, tournament: tournament, golfer: limited_golfer).count).to eq(0)
+    end
   end
 end
