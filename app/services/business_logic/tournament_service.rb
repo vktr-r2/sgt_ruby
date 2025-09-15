@@ -13,6 +13,12 @@ module BusinessLogic
 
     def current_tournament
       tourn_results = fetch_current_tournaments
+      
+      # If no tournaments found for current week, check for tournaments in draft window
+      if tourn_results.empty?
+        tourn_results = fetch_tournaments_in_draft_window
+      end
+      
       return tourn_results.first unless more_than_one_current_tourn?(tourn_results)
 
       determine_more_valuable_tourn(tourn_results)
@@ -37,6 +43,16 @@ module BusinessLogic
         week_number: current_week,
         year: @date.year
       )
+    end
+
+    def fetch_tournaments_in_draft_window
+      # Find tournaments where current date is within their draft window
+      # Draft window is 2 days before tournament starts to 1 day before tournament starts
+      current_time = Time.zone.now
+      
+      Tournament.where(year: @date.year).select do |tournament|
+        tournament.draft_window_open?(current_time)
+      end
     end
 
     def current_week
