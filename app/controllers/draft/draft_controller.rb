@@ -14,6 +14,10 @@ module Draft
       elsif draft_window_service.draft_open? && @data[:picks].blank?
         @mode = :pick
 
+      # Handle edit case - draft window is open and user has existing picks
+      elsif draft_window_service.draft_open? && @data[:picks].present?
+        @mode = :edit
+
       # Handle reviewing your existing picks any other time.
       else
         @mode = :review
