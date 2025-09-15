@@ -51,6 +51,9 @@ IMPROVE ADMIN FUNCTIONALITY
 MISC UPDATES
 - Add password reset capabilities
 - Add draft reminder email services
+- Update favicon
+- Make logo
+- Work on styling (mobile friendly)
 
 MATCH FEATURES
 - Pull in tourn score data
