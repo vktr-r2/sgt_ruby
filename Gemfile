@@ -67,7 +67,7 @@ group :development, :test do
   # Rspec and mocking
   gem "rspec-rails", "~> 6.0"
   gem "factory_bot_rails"
-  gem "shoulda-matchers", "~> 5.0"
+  gem "shoulda-matchers", "~> 6.4"
 
   # Debugging
   gem "pry-byebug"
