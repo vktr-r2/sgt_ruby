@@ -209,14 +209,44 @@ RSpec.describe 'Draft::DraftController', type: :request do
             })
         end
 
-        it 'returns review mode even during draft window if picks exist' do
+        it 'returns edit mode during draft window if picks exist' do
           get '/draft', headers: auth_headers
 
           expect(response).to have_http_status(:ok)
           json_response = JSON.parse(response.body)
           
-          expect(json_response['mode']).to eq('review')
+          expect(json_response['mode']).to eq('edit')
           expect(json_response['picks'].count).to eq(8)
+        end
+
+        it 'allows editing picks during draft window' do
+          # First verify we're in edit mode
+          get '/draft', headers: auth_headers
+          json_response = JSON.parse(response.body)
+          expect(json_response['mode']).to eq('edit')
+          
+          # Prepare new picks (different golfers)
+          new_picks = golfers[5..7].map { |golfer| { golfer_id: golfer.id } } +
+                     golfers[0..4].map { |golfer| { golfer_id: golfer.id } }
+          
+          # Submit new picks
+          expect do
+            post '/draft/submit', params: { picks: new_picks }, headers: auth_headers, as: :json
+          end.to change(MatchPick, :count).by(0) # 8 removed, 8 added = net 0
+          
+          expect(response).to have_http_status(:ok)
+          json_response = JSON.parse(response.body)
+          expect(json_response['message']).to eq('Picks submitted successfully!')
+          
+          # Verify old picks are gone and new picks exist
+          updated_picks = MatchPick.where(user_id: user.id, tournament: tournament).order(:priority)
+          expect(updated_picks.count).to eq(8)
+          
+          # Verify the picks match our new submission
+          new_picks.each_with_index do |pick_data, index|
+            expect(updated_picks[index].golfer_id).to eq(pick_data[:golfer_id])
+            expect(updated_picks[index].priority).to eq(index + 1)
+          end
         end
       end
     end
@@ -531,7 +561,7 @@ RSpec.describe 'Draft::DraftController', type: :request do
       json_response = JSON.parse(response.body)
       
       expect(json_response).to include('mode', 'golfers', 'tournament', 'picks')
-      expect(json_response['mode']).to be_in(['unavailable', 'pick', 'review'])
+      expect(json_response['mode']).to be_in(['unavailable', 'pick', 'edit', 'review'])
       expect(json_response['golfers']).to be_an(Array)
       expect(json_response['tournament']).to be_a(Hash)
       expect(json_response['picks']).to be_an(Array)
