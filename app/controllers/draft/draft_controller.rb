@@ -23,11 +23,8 @@ module Draft
         @mode = :review
       end
 
-      # Ensure mode is always a valid string
-      @mode = :review if @mode.nil?
-      
       render json: {
-        mode: @mode.to_s,
+        mode: @mode,
         golfers: @golfers.map { |g| golfer_json(g) },
         tournament: tournament_json(@data),
         picks: @data[:picks].map { |p| pick_json(p) }
