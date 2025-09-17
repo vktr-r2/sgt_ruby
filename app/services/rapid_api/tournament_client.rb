@@ -4,7 +4,7 @@ module RapidApi
       url_path = "tournament"
       params = {
         "orgId" => 1,
-        "tournId" => tourn_id,
+        "tournId" => tourn_id.to_s,
         "year" => Time.now.year
       }
       make_request(url_path, params)
