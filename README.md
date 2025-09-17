@@ -58,6 +58,7 @@ MISC UPDATES
 MATCH FEATURES
 - Pull in tourn score data
     - API call needs to be built
+        - Do we use the Leaderboard, or Scorecard endpoint? Need to test this week how current the data is of each one.
     - Data mapper needs to be built
     - Cron job twice daily IF tournament is active that day
     - Save player scores
