@@ -7,11 +7,30 @@ module Mappers
 
     def map_to_attributes
       {
-        "source_id" => @golfer_data["playerId"],
-        "f_name" => @golfer_data["firstName"],
-        "l_name" => @golfer_data["lastName"],
+        # Golfer identification
+        "source_id" => player_id,
+        
+        # Golfer name information
+        "f_name" => first_name,
+        "l_name" => last_name,
+        
+        # Tournament association
         "last_active_tourney" => @tournament_unique_id
       }
+    end
+
+    private
+
+    def player_id
+      @golfer_data["playerId"]
+    end
+
+    def first_name
+      @golfer_data["firstName"]
+    end
+
+    def last_name
+      @golfer_data["lastName"]
     end
   end
 end
