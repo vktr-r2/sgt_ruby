@@ -6,7 +6,7 @@ class TournamentSeed < TableSeed
 
         Tournament.create!(
           tournament_id: fields[:tournament_id],
-          source_id: fields[:source_id],
+          unique_id: fields[:unique_id],
           name: fields[:name],
           year: fields[:year],
           golf_course: fields[:golf_course],
@@ -30,7 +30,7 @@ class TournamentSeed < TableSeed
       {
         fields: {
           tournament_id: "001",
-          source_id: "64fbe447235ac8857ff92842",
+          unique_id: "64fbe447235ac8857ff92842",
           name: "THE PLAYERS Championship",
           year: 2024,
           golf_course: "TPC Sawgrass (THE PLAYERS Stadium Course)",
@@ -52,7 +52,7 @@ class TournamentSeed < TableSeed
       {
         fields: {
           tournament_id: "002",
-          source_id: "54fbe447235ac8857ff92853",
+          unique_id: "54fbe447235ac8857ff92853",
           name: "The Masters Tournament",
           year: 2024,
           golf_course: "Augusta National Golf Club",

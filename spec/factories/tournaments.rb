@@ -3,7 +3,6 @@ require 'securerandom'
 FactoryBot.define do
   factory :tournament do
     tournament_id { rand(1000..9999).to_s }
-    source_id { SecureRandom.base64(10) }
     sequence(:unique_id) { |n| "tournament_#{n}_#{SecureRandom.hex(4)}" }
     name { "Genesis Invitational" }
     year { Date.today.year }

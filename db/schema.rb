@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_25_181145) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_17_022638) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -61,7 +61,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_25_181145) do
 
   create_table "tournaments", force: :cascade do |t|
     t.string "tournament_id", default: ""
-    t.string "source_id", default: "", null: false
     t.string "name", default: "", null: false
     t.integer "year", null: false
     t.string "golf_course", default: "", null: false
@@ -77,7 +76,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_25_181145) do
     t.integer "par", default: 72, null: false
     t.integer "purse"
     t.string "unique_id"
-    t.index ["source_id"], name: "index_tournaments_on_source_id"
     t.index ["tournament_id", "year"], name: "index_tournaments_on_tournament_id_and_year"
   end
 
