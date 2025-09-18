@@ -5,6 +5,7 @@ module BusinessLogic
       @user_service = BusinessLogic::UserService.new
       @current_tourn_golfers = BusinessLogic::GolferService.new.get_current_tourn_golfers
       @current_user = current_user
+      @draft_window_service = DraftWindowService.new(@current_tournament)
     end
 
     def get_current_user_picks_for_tourn
@@ -21,6 +22,23 @@ module BusinessLogic
         year: Date.today.year,
         picks: get_current_user_picks_for_tourn
       }
+    end
+
+    # Draft window related methods - delegates to DraftWindowService
+    def draft_open?
+      @draft_window_service.draft_open?
+    end
+
+    def draft_window_status
+      @draft_window_service.draft_window_status
+    end
+
+    def time_until_draft_opens
+      @draft_window_service.time_until_draft_opens
+    end
+
+    def time_until_draft_closes
+      @draft_window_service.time_until_draft_closes
     end
 
     def validate_picks

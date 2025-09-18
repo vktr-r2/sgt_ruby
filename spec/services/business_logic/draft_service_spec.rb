@@ -109,6 +109,42 @@ RSpec.describe BusinessLogic::DraftService do
     end
   end
 
+  describe 'draft window delegation methods' do
+    let(:draft_window_service) { instance_double(BusinessLogic::DraftWindowService) }
+
+    before do
+      allow(BusinessLogic::DraftWindowService).to receive(:new).and_return(draft_window_service)
+    end
+
+    describe '#draft_open?' do
+      it 'delegates to draft window service' do
+        expect(draft_window_service).to receive(:draft_open?).and_return(true)
+        expect(service.draft_open?).to be true
+      end
+    end
+
+    describe '#draft_window_status' do
+      it 'delegates to draft window service' do
+        expect(draft_window_service).to receive(:draft_window_status).and_return(:open)
+        expect(service.draft_window_status).to eq(:open)
+      end
+    end
+
+    describe '#time_until_draft_opens' do
+      it 'delegates to draft window service' do
+        expect(draft_window_service).to receive(:time_until_draft_opens).and_return(3600)
+        expect(service.time_until_draft_opens).to eq(3600)
+      end
+    end
+
+    describe '#time_until_draft_closes' do
+      it 'delegates to draft window service' do
+        expect(draft_window_service).to receive(:time_until_draft_closes).and_return(7200)
+        expect(service.time_until_draft_closes).to eq(7200)
+      end
+    end
+  end
+
   describe '#validate_picks' do
     let(:user_service) { instance_double(BusinessLogic::UserService) }
     let(:user_ids) { [user.id, create(:user).id, create(:user).id] }

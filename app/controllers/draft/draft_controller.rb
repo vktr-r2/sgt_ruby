@@ -1,21 +1,20 @@
 module Draft
   class DraftController < ApplicationController
-    before_action :authenticate_user!, :load_golfers, :load_draft_review_data
+    before_action :authenticate_user!, :load_golfers, :load_draft_service
     before_action :load_tournament, only: [ :submit ]
 
     def index
-      draft_window_service = BusinessLogic::DraftWindowService.new
       
       # Handle cases where its not draft time yet or tournament golfers not avail in DB.
       if @golfers.blank?
         @mode = :unavailable
 
       # Handle draft day cases - now dynamic based on tournament start date
-      elsif draft_window_service.draft_open? && @data[:picks].blank?
+      elsif @draft_service.draft_open? && @data[:picks].blank?
         @mode = :pick
 
       # Handle edit case - draft window is open and user has existing picks
-      elsif draft_window_service.draft_open? && @data[:picks].present?
+      elsif @draft_service.draft_open? && @data[:picks].present?
         @mode = :edit
 
       # Handle reviewing your existing picks any other time.
@@ -76,8 +75,9 @@ module Draft
       @golfers = BusinessLogic::GolferService.new.get_current_tourn_golfers
     end
 
-    def load_draft_review_data
-      @data = BusinessLogic::DraftService.new(current_user).get_draft_review_data
+    def load_draft_service
+      @draft_service = BusinessLogic::DraftService.new(current_user)
+      @data = @draft_service.get_draft_review_data
     end
 
     def load_tournament
