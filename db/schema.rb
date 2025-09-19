@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_17_022638) do
+ActiveRecord::Schema[8.0].define(version: 2025_09_19_032753) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -33,6 +33,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_17_022638) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["golfer_id"], name: "index_match_picks_on_golfer_id"
+    t.index ["tournament_id", "user_id", "golfer_id"], name: "index_match_picks_tournament_user_golfer"
     t.index ["tournament_id"], name: "index_match_picks_on_tournament_id"
     t.index ["user_id"], name: "index_match_picks_on_user_id"
   end
@@ -56,7 +57,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_17_022638) do
     t.integer "round", default: 1
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["match_pick_id", "round"], name: "index_scores_on_match_pick_and_round", unique: true
+    t.index ["match_pick_id", "score"], name: "index_scores_on_match_pick_and_score"
     t.index ["match_pick_id"], name: "index_scores_on_match_pick_id"
+    t.index ["round", "score"], name: "index_scores_on_round_and_score"
+    t.check_constraint "round >= 1 AND round <= 4", name: "valid_round_range"
   end
 
   create_table "tournaments", force: :cascade do |t|
