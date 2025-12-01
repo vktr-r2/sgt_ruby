@@ -37,3 +37,6 @@
 # Ignore Redis dump files
 *.rdb
 dump.rdb
+
+# Ignore local Claude notes
+CLAUDE.md

@@ -30,6 +30,21 @@ Things you may want to cover:
     - redis-server (start redis)
     - bundle exec sidekiq (start sidekiq)
 
+## Deployment to Railway
+
+1. Install Railway CLI: `npm install -g @railway/cli`
+2. Login and initialize: `railway login && railway init`
+3. Add PostgreSQL and Redis services in Railway dashboard
+4. Set environment variables in Railway:
+   - `RAILS_ENV=production`
+   - `RAILS_MASTER_KEY=<from config/master.key>`
+   - `RAILS_LOG_TO_STDOUT=1`
+   - `RAILS_SERVE_STATIC_FILES=1`
+5. Deploy: `railway up` or connect GitHub repo for auto-deploy
+6. First deploy only: `railway run rails db:migrate db:seed`
+
+See `RAILWAY_DEPLOYMENT.md` for detailed instructions.
+
 * Import data
 
     - ScheduleImportJob.perform_now
