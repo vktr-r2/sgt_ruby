@@ -21,5 +21,18 @@ RSpec.describe SnakeDraftJob, type: :job do
         described_class.perform_now
       end
     end
+
+    context "when draft fails" do
+      let(:failure_result) { { success: false, error: "No tournament found" } }
+
+      before do
+        allow(service).to receive(:execute_draft).and_return(failure_result)
+      end
+
+      it "logs error message" do
+        expect(Rails.logger).to receive(:error).with("Snake draft failed: No tournament found")
+        described_class.perform_now
+      end
+    end
   end
 end
