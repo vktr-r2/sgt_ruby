@@ -6,8 +6,11 @@ class Tournament < ApplicationRecord
   validates :week_number, presence: true
   validates :year, presence: true
   validates :format, presence: true
+
+  # Associations
   has_many :players, foreign_key: "last_active_tourney", primary_key: "unique_id"
   has_many :match_picks, foreign_key: "tournament_id", primary_key: "id", dependent: :destroy
+  has_many :match_results, dependent: :destroy
 
   def draft_window_start
     # Two days before tournament starts at 00:00:00

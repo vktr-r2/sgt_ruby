@@ -9,6 +9,10 @@ class User < ApplicationRecord
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable
 
+  # Associations
+  has_many :match_picks, dependent: :destroy
+  has_many :match_results, dependent: :destroy
+
   validates :name, presence: true
   validates :authentication_token, uniqueness: true, allow_nil: true
   
