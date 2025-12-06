@@ -37,6 +37,33 @@ module BusinessLogic
       MAJORS.include?(name.downcase)
     end
 
+    def previous_tournament_with_results(tournament = nil)
+      tournament ||= current_tournament
+      return nil unless tournament
+
+      Tournament.where("start_date < ?", tournament.start_date)
+                .where(year: tournament.year)
+                .order(start_date: :desc)
+                .find { |t| t.match_results.exists? }
+    end
+
+    def previous_year_final_tournament(year = Date.today.year)
+      previous_year = year - 1
+
+      Tournament.where(year: previous_year)
+                .order(start_date: :desc)
+                .first
+    end
+
+    def first_tournament_of_year?(tournament = nil)
+      tournament ||= current_tournament
+      return false unless tournament
+
+      Tournament.where("start_date < ?", tournament.start_date)
+                .where(year: tournament.year)
+                .empty?
+    end
+
     private
     def fetch_current_tournaments
       Tournament.where(
