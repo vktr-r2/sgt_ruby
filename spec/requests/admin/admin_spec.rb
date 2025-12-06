@@ -57,11 +57,11 @@ RSpec.describe "Admin API", type: :request do
     context "as admin user" do
       it "returns tables data structure" do
         get "/admin", headers: admin_headers
-        
+
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response).to have_key('tables')
-        
+
         tables = json_response['tables']
         expect(tables).to have_key('users')
         expect(tables).to have_key('golfers')
@@ -77,12 +77,12 @@ RSpec.describe "Admin API", type: :request do
     context "with valid table name" do
       it "returns table data and metadata for users" do
         create_list(:user, 3)
-        
+
         get "/admin/table/users", headers: admin_headers
-        
+
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response).to have_key('data')
         expect(json_response).to have_key('columns')
         expect(json_response).to have_key('table_name')
@@ -94,9 +94,9 @@ RSpec.describe "Admin API", type: :request do
 
       it "returns table data for golfers" do
         create_list(:golfer, 2)
-        
+
         get "/admin/table/golfers", headers: admin_headers
-        
+
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response['table_name']).to eq('golfers')
@@ -105,9 +105,9 @@ RSpec.describe "Admin API", type: :request do
 
       it "returns table data for tournaments" do
         create_list(:tournament, 2)
-        
+
         get "/admin/table/tournaments", headers: admin_headers
-        
+
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response['table_name']).to eq('tournaments')
@@ -116,14 +116,14 @@ RSpec.describe "Admin API", type: :request do
 
       it "includes column metadata with types" do
         get "/admin/table/users", headers: admin_headers
-        
+
         json_response = JSON.parse(response.body)
         columns = json_response['columns']
-        
+
         email_column = columns.find { |col| col['name'] == 'email' }
         expect(email_column).to be_present
         expect(email_column['type']).to eq('string')
-        
+
         admin_column = columns.find { |col| col['name'] == 'admin' }
         expect(admin_column).to be_present
         expect(admin_column['type']).to eq('boolean')
@@ -133,7 +133,7 @@ RSpec.describe "Admin API", type: :request do
     context "with invalid table name" do
       it "returns bad request for non-existent table" do
         get "/admin/table/invalid_table", headers: admin_headers
-        
+
         expect(response).to have_http_status(:bad_request)
         json_response = JSON.parse(response.body)
         expect(json_response['error']).to eq('Invalid table')
@@ -141,7 +141,7 @@ RSpec.describe "Admin API", type: :request do
 
       it "returns bad request for non-whitelisted table" do
         get "/admin/table/schema_migrations", headers: admin_headers
-        
+
         expect(response).to have_http_status(:bad_request)
         json_response = JSON.parse(response.body)
         expect(json_response['error']).to eq('Invalid table')
@@ -165,7 +165,7 @@ RSpec.describe "Admin API", type: :request do
 
       it "returns validation errors for incomplete user data (expected behavior)" do
         post "/admin/table/users", params: user_params, headers: admin_headers
-        
+
         # User creation should fail due to missing password - this is expected
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
@@ -175,9 +175,9 @@ RSpec.describe "Admin API", type: :request do
 
       it "returns validation errors for invalid email" do
         user_params[:record][:email] = ""
-        
+
         post "/admin/table/users", params: user_params, headers: admin_headers
-        
+
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         expect(json_response).to have_key('errors')
@@ -187,9 +187,9 @@ RSpec.describe "Admin API", type: :request do
       it "returns validation errors for duplicate email" do
         existing_user = create(:user, email: "duplicate@example.com")
         user_params[:record][:email] = "duplicate@example.com"
-        
+
         post "/admin/table/users", params: user_params, headers: admin_headers
-        
+
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         expect(json_response).to have_key('errors')
@@ -213,11 +213,11 @@ RSpec.describe "Admin API", type: :request do
         expect {
           post "/admin/table/golfers", params: golfer_params, headers: admin_headers
         }.to change(Golfer, :count).by(1)
-        
+
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response['message']).to eq('Record created successfully')
-        
+
         created_golfer = Golfer.find(json_response['record']['id'])
         expect(created_golfer.f_name).to eq("John")
         expect(created_golfer.l_name).to eq("Doe")
@@ -228,7 +228,7 @@ RSpec.describe "Admin API", type: :request do
 
   describe "PUT /admin/table/:table/:id" do
     let(:user_to_update) { create(:user, name: "Original Name") }
-    
+
     context "updating a user" do
       let(:update_params) do
         {
@@ -241,18 +241,18 @@ RSpec.describe "Admin API", type: :request do
 
       it "updates the user record and refreshes timestamp" do
         original_updated_at = user_to_update.updated_at
-        
+
         # Ensure some time passes for timestamp comparison
         travel_to(1.minute.from_now) do
           put "/admin/table/users/#{user_to_update.id}", params: update_params, headers: admin_headers
         end
-        
+
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response).to have_key('record')
         expect(json_response).to have_key('message')
         expect(json_response['message']).to eq('Record updated successfully')
-        
+
         user_to_update.reload
         expect(user_to_update.name).to eq("Updated Name")
         expect(user_to_update.admin).to be(true)
@@ -261,9 +261,9 @@ RSpec.describe "Admin API", type: :request do
 
       it "returns validation errors for invalid updates" do
         update_params[:record][:email] = ""
-        
+
         put "/admin/table/users/#{user_to_update.id}", params: update_params, headers: admin_headers
-        
+
         expect(response).to have_http_status(:unprocessable_entity)
         json_response = JSON.parse(response.body)
         expect(json_response).to have_key('errors')
@@ -271,7 +271,7 @@ RSpec.describe "Admin API", type: :request do
 
       it "returns not found for non-existent record" do
         put "/admin/table/users/99999", params: update_params, headers: admin_headers
-        
+
         expect(response).to have_http_status(:not_found)
         json_response = JSON.parse(response.body)
         expect(json_response['error']).to eq('Record not found')
@@ -281,25 +281,25 @@ RSpec.describe "Admin API", type: :request do
 
   describe "DELETE /admin/table/:table/:id" do
     let(:user_to_delete) { create(:user) }
-    
+
     context "deleting a user" do
       it "deletes the user record" do
         user_id = user_to_delete.id
-        
+
         expect {
           delete "/admin/table/users/#{user_id}", headers: admin_headers
         }.to change(User, :count).by(-1)
-        
+
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response['message']).to eq('Record deleted successfully')
-        
+
         expect(User.find_by(id: user_id)).to be_nil
       end
 
       it "returns not found for non-existent record" do
         delete "/admin/table/users/99999", headers: admin_headers
-        
+
         expect(response).to have_http_status(:not_found)
         json_response = JSON.parse(response.body)
         expect(json_response['error']).to eq('Record not found')
@@ -312,11 +312,11 @@ RSpec.describe "Admin API", type: :request do
         tournament = create(:tournament)
         golfer = create(:golfer)
         match_pick = create(:match_pick, user: user, tournament: tournament, golfer: golfer)
-        
+
         expect {
           delete "/admin/table/users/#{user.id}", headers: admin_headers
         }.to change(MatchPick, :count).by(-1)
-        
+
         expect(response).to have_http_status(:ok)
       end
     end
@@ -340,10 +340,10 @@ RSpec.describe "Admin API", type: :request do
         }
 
         post "/admin/table/match_picks", params: match_pick_params, headers: admin_headers
-        
+
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
-        
+
         match_pick = MatchPick.find(json_response['record']['id'])
         expect(match_pick.user_id).to eq(user.id)
         expect(match_pick.tournament_id).to eq(tournament.id)
@@ -353,9 +353,9 @@ RSpec.describe "Admin API", type: :request do
 
       it "includes associated data when fetching match_picks" do
         create(:match_pick, user: user, tournament: tournament, golfer: golfer)
-        
+
         get "/admin/table/match_picks", headers: admin_headers
-        
+
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response['data']).to be_present

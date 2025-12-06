@@ -44,7 +44,7 @@ module BusinessLogic
 
       # Build draft order: 4th place picks 1st, 3rd picks 2nd, 2nd picks 3rd, 1st picks 4th
       draft_order = []
-      [4, 3, 2, 1].each do |place|
+      [ 4, 3, 2, 1 ].each do |place|
         users_at_place = results_by_place[place] || []
 
         if users_at_place.length > 1
@@ -102,7 +102,7 @@ module BusinessLogic
         scores_b = user_scores[user_b]
 
         # Compare score by score
-        max_length = [scores_a.length, scores_b.length].max
+        max_length = [ scores_a.length, scores_b.length ].max
         comparison = 0
 
         max_length.times do |i|

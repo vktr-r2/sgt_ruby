@@ -17,7 +17,7 @@ class Tournament < ApplicationRecord
     (start_date - 2.days).beginning_of_day
   end
 
-  def draft_window_end  
+  def draft_window_end
     # One day before tournament starts at 23:59:59
     (start_date - 1.day).end_of_day
   end

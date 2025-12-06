@@ -3,7 +3,7 @@ class HomeController < ApplicationController
     tournament_service = BusinessLogic::TournamentService.new
     current_tournament = tournament_service.current_tournament
     draft_window_service = BusinessLogic::DraftWindowService.new(current_tournament)
-    
+
     render json: {
       current_tournament: current_tournament ? {
         id: current_tournament.id,

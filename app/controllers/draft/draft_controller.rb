@@ -5,7 +5,7 @@ module Draft
 
     def index
       draft_window_service = BusinessLogic::DraftWindowService.new
-      
+
       # Handle cases where its not draft time yet or tournament golfers not avail in DB.
       if @golfers.blank?
         @mode = :unavailable
@@ -34,27 +34,27 @@ module Draft
     def submit
       tournament_id = @tournament.id
       picks_data = params[:picks] || []
-      
+
       # Extract golfer IDs for validation
       golfer_ids = picks_data.map { |pick| pick[:golfer_id] || pick["golfer_id"] }.compact
-      
+
       # Validate golfer selection limits
       validation_service = BusinessLogic::GolferLimitValidationService.new(current_user.id, golfer_ids)
       validation_result = validation_service.validate
-      
+
       unless validation_result[:valid]
         # Return the first violation error
         first_violation = validation_result[:violations].first
         return render json: { error: first_violation[:message] }, status: :unprocessable_entity
       end
-      
+
       # Clear existing picks first
       MatchPick.where(user_id: current_user.id, tournament_id: tournament_id).destroy_all
-      
+
       # Process each golfer selection
       picks_data.each_with_index do |pick, index|
         golfer_id = pick[:golfer_id] || pick["golfer_id"]
-        
+
         if golfer_id.present?
           MatchPick.create!(
             user_id: current_user.id,
@@ -82,9 +82,9 @@ module Draft
     def load_tournament
       @tournament = BusinessLogic::TournamentService.new.current_tournament
     end
-    
+
     private
-    
+
     def golfer_json(golfer)
       {
         id: golfer.id,
@@ -93,14 +93,14 @@ module Draft
         full_name: "#{golfer.f_name} #{golfer.l_name}"
       }
     end
-    
+
     def tournament_json(data)
       {
         name: data[:tournament_name],
         year: data[:year]
       }
     end
-    
+
     def pick_json(pick)
       {
         id: pick.id,

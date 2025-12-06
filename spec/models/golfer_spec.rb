@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe Golfer, type: :model do
   let(:tournament) { create(:tournament) }
-  
+
   describe 'associations' do
     it { should belong_to(:tournament).with_foreign_key('last_active_tourney').with_primary_key('unique_id') }
 
@@ -26,20 +26,20 @@ RSpec.describe Golfer, type: :model do
 
   describe 'attributes' do
     it 'has first and last name attributes' do
-      golfer = create(:golfer, 
-                     f_name: 'Tiger', 
-                     l_name: 'Woods',
-                     last_active_tourney: tournament.unique_id)
-      
+      golfer = create(:golfer,
+                      f_name: 'Tiger',
+                      l_name: 'Woods',
+                      last_active_tourney: tournament.unique_id)
+
       expect(golfer.f_name).to eq('Tiger')
       expect(golfer.l_name).to eq('Woods')
     end
 
     it 'has source_id attribute for external API reference' do
-      golfer = create(:golfer, 
-                     source_id: 'api_golfer_123',
-                     last_active_tourney: tournament.unique_id)
-      
+      golfer = create(:golfer,
+                      source_id: 'api_golfer_123',
+                      last_active_tourney: tournament.unique_id)
+
       expect(golfer.source_id).to eq('api_golfer_123')
     end
 
@@ -53,7 +53,7 @@ RSpec.describe Golfer, type: :model do
     it 'creates golfers for a tournament' do
       golfer1 = create(:golfer, f_name: 'Tiger', l_name: 'Woods', last_active_tourney: tournament.unique_id)
       golfer2 = create(:golfer, f_name: 'Rory', l_name: 'McIlroy', last_active_tourney: tournament.unique_id)
-      
+
       tournament_golfers = Golfer.where(last_active_tourney: tournament.unique_id)
       expect(tournament_golfers).to include(golfer1, golfer2)
       expect(tournament_golfers.count).to eq(2)
@@ -61,10 +61,10 @@ RSpec.describe Golfer, type: :model do
 
     it 'can create multiple tournaments with different golfers' do
       tournament2 = create(:tournament)
-      
+
       golfer1 = create(:golfer, f_name: 'Player1', last_active_tourney: tournament.unique_id)
       golfer2 = create(:golfer, f_name: 'Player2', last_active_tourney: tournament2.unique_id)
-      
+
       expect(Golfer.where(last_active_tourney: tournament.unique_id)).to include(golfer1)
       expect(Golfer.where(last_active_tourney: tournament.unique_id)).not_to include(golfer2)
       expect(Golfer.where(last_active_tourney: tournament2.unique_id)).to include(golfer2)
@@ -73,19 +73,19 @@ RSpec.describe Golfer, type: :model do
 
     it 'can have the same golfer in different tournaments' do
       tournament2 = create(:tournament)
-      
-      golfer1 = create(:golfer, 
-                      f_name: 'Tiger', 
-                      l_name: 'Woods', 
-                      source_id: 'tiger_1',
-                      last_active_tourney: tournament.unique_id)
-      
-      golfer2 = create(:golfer, 
-                      f_name: 'Tiger', 
-                      l_name: 'Woods', 
-                      source_id: 'tiger_2',
-                      last_active_tourney: tournament2.unique_id)
-      
+
+      golfer1 = create(:golfer,
+                       f_name: 'Tiger',
+                       l_name: 'Woods',
+                       source_id: 'tiger_1',
+                       last_active_tourney: tournament.unique_id)
+
+      golfer2 = create(:golfer,
+                       f_name: 'Tiger',
+                       l_name: 'Woods',
+                       source_id: 'tiger_2',
+                       last_active_tourney: tournament2.unique_id)
+
       expect(golfer1.f_name).to eq(golfer2.f_name)
       expect(golfer1.last_active_tourney).not_to eq(golfer2.last_active_tourney)
       expect(golfer1.tournament).not_to eq(golfer2.tournament)
@@ -113,7 +113,7 @@ RSpec.describe Golfer, type: :model do
     it 'creates unique golfers with factory sequence' do
       golfer1 = create(:golfer, last_active_tourney: tournament.unique_id)
       golfer2 = create(:golfer, last_active_tourney: tournament.unique_id)
-      
+
       expect(golfer1.f_name).not_to eq(golfer2.f_name)
       expect(golfer1.source_id).not_to eq(golfer2.source_id)
     end

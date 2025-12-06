@@ -8,14 +8,14 @@ module BusinessLogic
 
     def validate
       violations = []
-      
+
       # Get all tournament unique_ids for current year
       current_year_tournaments = get_current_year_tournaments
       return { valid: true, violations: [] } if current_year_tournaments.empty?
-      
+
       # Get all golfer IDs already picked by user in current year where drafted = true
       existing_picks = get_existing_picks(current_year_tournaments)
-      
+
       # Check each current pick against the limit
       @current_picks.each do |golfer_id|
         existing_count = existing_picks.count(golfer_id)
@@ -29,7 +29,7 @@ module BusinessLogic
           }
         end
       end
-      
+
       {
         valid: violations.empty?,
         violations: violations
@@ -41,7 +41,7 @@ module BusinessLogic
     def get_current_year_tournaments
       year_start = Date.new(@current_year, 1, 1)
       year_end = Date.new(@current_year, 12, 31)
-      
+
       Tournament.where("start_date >= ? AND start_date <= ?", year_start, year_end)
                 .pluck(:unique_id)
     end
@@ -56,7 +56,7 @@ module BusinessLogic
     def get_golfer_name(golfer_id)
       golfer = Golfer.find_by(id: golfer_id)
       return "Unknown Golfer" unless golfer
-      
+
       "#{golfer.f_name} #{golfer.l_name}".strip
     end
   end

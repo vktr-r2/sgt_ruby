@@ -78,7 +78,7 @@ RSpec.describe BusinessLogic::SnakeDraftService, type: :service do
         result = service.execute_draft(current_tournament)
 
         expect(result[:success]).to be true
-        expect(result[:draft_order]).to eq([users[0], users[1], users[2], users[3]])
+        expect(result[:draft_order]).to eq([ users[0], users[1], users[2], users[3] ])
       end
 
       it "executes snake draft pattern correctly" do
@@ -139,7 +139,7 @@ RSpec.describe BusinessLogic::SnakeDraftService, type: :service do
         result = service.execute_draft(current_tournament)
 
         # Draft order: User1 (4th), User2 (2nd-better tiebreak), User3 (2nd-worse), User4 (1st)
-        expect(result[:draft_order]).to eq([users[0], users[1], users[2], users[3]])
+        expect(result[:draft_order]).to eq([ users[0], users[1], users[2], users[3] ])
       end
     end
 
@@ -200,7 +200,7 @@ RSpec.describe BusinessLogic::SnakeDraftService, type: :service do
         result = service.execute_draft(first_tournament_of_year)
 
         # Worst (highest score) picks first: User4 (-5), User3 (-10), User2 (-15), User1 (-20)
-        expect(result[:draft_order]).to eq([users[3], users[2], users[1], users[0]])
+        expect(result[:draft_order]).to eq([ users[3], users[2], users[1], users[0] ])
       end
     end
 

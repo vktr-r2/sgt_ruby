@@ -43,9 +43,9 @@ RSpec.describe Tournament, type: :model do
       end
 
       it 'accepts valid date ranges' do
-        tournament = build(:tournament, 
-                          start_date: Date.current, 
-                          end_date: Date.current + 3.days)
+        tournament = build(:tournament,
+                           start_date: Date.current,
+                           end_date: Date.current + 3.days)
         expect(tournament).to be_valid
       end
     end
@@ -87,7 +87,7 @@ RSpec.describe Tournament, type: :model do
     it 'can have associated golfers via unique_id' do
       tournament = create(:tournament)
       golfer = create(:golfer, last_active_tourney: tournament.unique_id)
-      
+
       # Test the association works by finding golfers
       associated_golfers = Golfer.where(last_active_tourney: tournament.unique_id)
       expect(associated_golfers).to include(golfer)
@@ -97,7 +97,7 @@ RSpec.describe Tournament, type: :model do
       tournament = create(:tournament)
       user = create(:user)
       match_pick = create(:match_pick, tournament: tournament, user_id: user.id)
-      
+
       expect(tournament.match_picks).to include(match_pick)
     end
 
@@ -105,7 +105,7 @@ RSpec.describe Tournament, type: :model do
       tournament = create(:tournament)
       user = create(:user)
       match_pick = create(:match_pick, tournament: tournament, user_id: user.id)
-      
+
       expect { tournament.destroy }.to change(MatchPick, :count).by(-1)
       expect { match_pick.reload }.to raise_error(ActiveRecord::RecordNotFound)
     end

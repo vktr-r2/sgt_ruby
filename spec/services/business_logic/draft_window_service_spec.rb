@@ -162,7 +162,7 @@ RSpec.describe BusinessLogic::DraftWindowService do
   describe 'with different tournament start days' do
     context 'when tournament starts on Wednesday' do
       let(:tournament) { create(:tournament, start_date: Time.zone.parse('2024-06-19 00:00:00')) } # Wednesday tournament
-      
+
       it 'has draft window on Monday-Tuesday' do
         expect(tournament.draft_window_start).to eq Time.zone.parse('2024-06-17 00:00:00') # Monday
         expect(tournament.draft_window_end).to eq Time.zone.parse('2024-06-18 23:59:59.999999999') # Tuesday
@@ -180,7 +180,7 @@ RSpec.describe BusinessLogic::DraftWindowService do
 
     context 'when tournament starts on Sunday' do
       let(:tournament) { create(:tournament, start_date: Time.zone.parse('2024-06-23 00:00:00')) } # Sunday tournament
-      
+
       it 'has draft window on Friday-Saturday' do
         expect(tournament.draft_window_start).to eq Time.zone.parse('2024-06-21 00:00:00') # Friday
         expect(tournament.draft_window_end).to eq Time.zone.parse('2024-06-22 23:59:59.999999999') # Saturday

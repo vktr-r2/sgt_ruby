@@ -38,5 +38,6 @@
 *.rdb
 dump.rdb
 
-# Ignore local Claude notes
+# Ignore local Claude notes and settings
 CLAUDE.md
+.claude/settings.local.json
