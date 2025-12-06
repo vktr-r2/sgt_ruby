@@ -203,5 +203,45 @@ RSpec.describe BusinessLogic::SnakeDraftService, type: :service do
         expect(result[:draft_order]).to eq([users[3], users[2], users[1], users[0]])
       end
     end
+
+    context "with golfer conflicts" do
+      it "handles conflicts by using next priority pick" do
+        # Set up scenario where multiple users want the same golfers
+        users.each do |user|
+          MatchPick.where(user: user, tournament: current_tournament).destroy_all
+
+          # All users prioritize the same first 4 golfers
+          4.times do |i|
+            create(:match_pick,
+                   user: user,
+                   tournament: current_tournament,
+                   golfer: golfers[i],
+                   priority: i + 1,
+                   drafted: false)
+          end
+
+          # Then unique golfers for picks 5-8
+          4.times do |i|
+            unique_golfer_index = users.index(user) * 4 + i + 4
+            create(:match_pick,
+                   user: user,
+                   tournament: current_tournament,
+                   golfer: golfers[unique_golfer_index],
+                   priority: i + 5,
+                   drafted: false)
+          end
+        end
+
+        result = service.execute_draft(current_tournament)
+
+        expect(result[:success]).to be true
+
+        # Only one user should get each of the first 4 golfers
+        golfers[0..3].each do |golfer|
+          picks_for_golfer = MatchPick.where(tournament: current_tournament, golfer: golfer, drafted: true)
+          expect(picks_for_golfer.count).to eq(1)
+        end
+      end
+    end
   end
 end
