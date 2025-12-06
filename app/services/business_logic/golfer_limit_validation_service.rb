@@ -48,7 +48,7 @@ module BusinessLogic
 
     def get_existing_picks(tournament_unique_ids)
       MatchPick.joins(:tournament)
-              .where(user_id: @user_id, drafted: true)
+              .where(user_id: @user_id)
               .where(tournaments: { unique_id: tournament_unique_ids })
               .pluck(:golfer_id)
     end
