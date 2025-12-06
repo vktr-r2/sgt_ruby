@@ -60,8 +60,7 @@ module Draft
             user_id: current_user.id,
             tournament_id: tournament_id,
             golfer_id: golfer_id,
-            priority: index + 1,
-            drafted: true
+            priority: index + 1
           )
         end
       end
