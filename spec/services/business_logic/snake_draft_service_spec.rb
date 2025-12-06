@@ -56,5 +56,30 @@ RSpec.describe BusinessLogic::SnakeDraftService, type: :service do
         expect(drafted_picks.count).to eq(32)
       end
     end
+
+    context "with previous tournament results" do
+      let!(:previous_tournament) do
+        create(:tournament,
+               name: "Previous Tournament",
+               start_date: Date.today - 5.days,
+               year: Date.today.year,
+               week_number: (Date.today - 5.days).strftime("%V").to_i)
+      end
+
+      before do
+        # Create match results: User4 = 1st, User3 = 2nd, User2 = 3rd, User1 = 4th
+        create(:match_result, :first_place, user: users[3], tournament: previous_tournament)
+        create(:match_result, :second_place, user: users[2], tournament: previous_tournament)
+        create(:match_result, :third_place, user: users[1], tournament: previous_tournament)
+        create(:match_result, :fourth_place, user: users[0], tournament: previous_tournament)
+      end
+
+      it "uses reverse standings for draft order (4th, 3rd, 2nd, 1st)" do
+        result = service.execute_draft(current_tournament)
+
+        expect(result[:success]).to be true
+        expect(result[:draft_order]).to eq([users[0], users[1], users[2], users[3]])
+      end
+    end
   end
 end
