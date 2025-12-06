@@ -97,5 +97,50 @@ RSpec.describe BusinessLogic::SnakeDraftService, type: :service do
         end
       end
     end
+
+    context "with tied placements requiring tie-breaking" do
+      let!(:previous_tournament) do
+        create(:tournament,
+               name: "Previous Tournament",
+               start_date: Date.today - 5.days,
+               year: Date.today.year,
+               week_number: (Date.today - 5.days).strftime("%V").to_i)
+      end
+
+      let!(:previous_golfers) do
+        8.times.map { |i| create(:golfer, f_name: "PrevGolfer#{i}", l_name: "Test") }
+      end
+
+      before do
+        # Create match results with tie at 2nd place
+        create(:match_result, place: 1, total_score: -15, user: users[3], tournament: previous_tournament)
+        create(:match_result, place: 2, total_score: -10, user: users[1], tournament: previous_tournament)
+        create(:match_result, place: 2, total_score: -10, user: users[2], tournament: previous_tournament)
+        create(:match_result, place: 4, total_score: 0, user: users[0], tournament: previous_tournament)
+
+        # Create previous picks for tied users (User2 and User3)
+        users[1..2].each_with_index do |user, idx|
+          8.times do |i|
+            pick = create(:match_pick,
+                          user: user,
+                          tournament: previous_tournament,
+                          golfer: previous_golfers[i],
+                          priority: i + 1,
+                          drafted: true)
+
+            # User2 has better (lower) scores than User3
+            score_value = idx == 0 ? 65 + i : 68 + i
+            create(:score, match_pick: pick, score: score_value, round: 1)
+          end
+        end
+      end
+
+      it "applies tie-breaking using lowest scores" do
+        result = service.execute_draft(current_tournament)
+
+        # Draft order: User1 (4th), User2 (2nd-better tiebreak), User3 (2nd-worse), User4 (1st)
+        expect(result[:draft_order]).to eq([users[0], users[1], users[2], users[3]])
+      end
+    end
   end
 end
