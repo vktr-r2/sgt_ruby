@@ -43,6 +43,18 @@ RSpec.describe BusinessLogic::SnakeDraftService, type: :service do
   end
 
   describe "#execute_draft" do
-    # Tests will be added here
+    context "when there is no previous tournament data" do
+      it "randomizes draft order and assigns picks" do
+        result = service.execute_draft(current_tournament)
+
+        expect(result[:success]).to be true
+        expect(result[:draft_order].length).to eq(4)
+        expect(result[:assigned_picks]).to eq(32) # 4 users * 8 picks
+
+        # Verify all picks are now drafted
+        drafted_picks = MatchPick.where(tournament: current_tournament, drafted: true)
+        expect(drafted_picks.count).to eq(32)
+      end
+    end
   end
 end
