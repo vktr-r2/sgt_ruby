@@ -142,5 +142,66 @@ RSpec.describe BusinessLogic::SnakeDraftService, type: :service do
         expect(result[:draft_order]).to eq([users[0], users[1], users[2], users[3]])
       end
     end
+
+    context "first tournament of year with previous year data" do
+      let!(:previous_year_tournament1) do
+        create(:tournament,
+               name: "Last Year T1",
+               start_date: Date.today - 365.days,
+               year: Date.today.year - 1,
+               week_number: 1)
+      end
+
+      let!(:previous_year_tournament2) do
+        create(:tournament,
+               name: "Last Year T2",
+               start_date: Date.today - 360.days,
+               year: Date.today.year - 1,
+               week_number: 2)
+      end
+
+      let!(:first_tournament_of_year) do
+        create(:tournament,
+               name: "First of Year",
+               start_date: Date.new(Date.today.year, 1, 7),
+               year: Date.today.year,
+               week_number: 1)
+      end
+
+      before do
+        # User cumulative scores from previous year: User1=-20, User2=-15, User3=-10, User4=-5
+        create(:match_result, total_score: -12, user: users[0], tournament: previous_year_tournament1)
+        create(:match_result, total_score: -8, user: users[0], tournament: previous_year_tournament2)
+
+        create(:match_result, total_score: -10, user: users[1], tournament: previous_year_tournament1)
+        create(:match_result, total_score: -5, user: users[1], tournament: previous_year_tournament2)
+
+        create(:match_result, total_score: -6, user: users[2], tournament: previous_year_tournament1)
+        create(:match_result, total_score: -4, user: users[2], tournament: previous_year_tournament2)
+
+        create(:match_result, total_score: -3, user: users[3], tournament: previous_year_tournament1)
+        create(:match_result, total_score: -2, user: users[3], tournament: previous_year_tournament2)
+
+        # Create picks for first tournament of year
+        users.each_with_index do |user, user_index|
+          8.times do |priority|
+            golfer = golfers[user_index * 8 + priority]
+            create(:match_pick,
+                   user: user,
+                   tournament: first_tournament_of_year,
+                   golfer: golfer,
+                   priority: priority + 1,
+                   drafted: false)
+          end
+        end
+      end
+
+      it "uses previous year cumulative scores for draft order" do
+        result = service.execute_draft(first_tournament_of_year)
+
+        # Worst (highest score) picks first: User4 (-5), User3 (-10), User2 (-15), User1 (-20)
+        expect(result[:draft_order]).to eq([users[3], users[2], users[1], users[0]])
+      end
+    end
   end
 end
