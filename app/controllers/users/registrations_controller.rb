@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 class Users::RegistrationsController < Devise::RegistrationsController
-  skip_before_action :authenticate_user!, only: [:create]
-  
+  skip_before_action :authenticate_user!, only: [ :create ]
+
   def create
     user = User.new(sign_up_params)
-    
+
     if user.save
       user.ensure_authentication_token!
       render json: {
@@ -18,10 +18,10 @@ class Users::RegistrationsController < Devise::RegistrationsController
         token: user.authentication_token
       }, status: :created
     else
-      render json: { error: user.errors.full_messages.join(', ') }, status: :unprocessable_entity
+      render json: { error: user.errors.full_messages.join(", ") }, status: :unprocessable_entity
     end
   end
-  
+
   def show
     render json: {
       user: {
@@ -32,9 +32,9 @@ class Users::RegistrationsController < Devise::RegistrationsController
       }
     }
   end
-  
+
   private
-  
+
   def sign_up_params
     params.require(:user).permit(:email, :password, :password_confirmation, :name)
   end

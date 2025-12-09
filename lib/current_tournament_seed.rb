@@ -1,12 +1,12 @@
 class CurrentTournamentSeed
   def self.seed
     puts "Seeding current tournaments..."
-    
+
     # Clear existing data
     Tournament.destroy_all
     Golfer.destroy_all
     MatchPick.destroy_all
-    
+
     # Create current and upcoming tournaments for testing
     tournaments = [
       {
@@ -20,7 +20,7 @@ class CurrentTournamentSeed
         unique_id: "past-championship-1-#{Date.current.year}"
       },
       {
-        name: "Past Championship 2", 
+        name: "Past Championship 2",
         start_date: 2.weeks.ago,
         end_date: 2.weeks.ago + 3.days,
         week_number: 2.weeks.ago.strftime("%V").to_i,
@@ -45,7 +45,7 @@ class CurrentTournamentSeed
         end_date: Date.current + 5.days,
         week_number: (Date.current + 2.days).strftime("%V").to_i,
         year: Date.current.year,
-        format: "stroke", 
+        format: "stroke",
         tournament_id: "draft-window-open-#{Date.current.year}",
         unique_id: "draft-window-open-#{Date.current.year}"
       },
@@ -60,11 +60,11 @@ class CurrentTournamentSeed
         unique_id: "future-championship-#{Date.current.year}"
       }
     ]
-    
+
     tournaments.each do |tournament_data|
       tournament = Tournament.create!(tournament_data)
       puts "Created tournament: #{tournament.name}"
-      
+
       # Create golfers for each tournament
       golfers = [
         { f_name: "Tiger", l_name: "Woods" },
@@ -88,7 +88,7 @@ class CurrentTournamentSeed
         { f_name: "Sam", l_name: "Burns" },
         { f_name: "Hideki", l_name: "Matsuyama" }
       ]
-      
+
       golfers.each_with_index do |golfer_data, index|
         golfer = Golfer.find_or_initialize_by(
           f_name: golfer_data[:f_name],
@@ -101,13 +101,13 @@ class CurrentTournamentSeed
         golfer.source_id ||= "seed-#{golfer_data[:f_name].downcase}-#{golfer_data[:l_name].downcase}-#{index + 1}"
         golfer.save!
       end
-      
+
       puts "Created #{golfers.count} golfers for #{tournament.name}"
     end
-    
+
     # Create match picks for user 1 (Scottie Scheffler in past tournaments for testing limit)
     create_test_match_picks
-    
+
     puts "Tournament seeding completed!"
   end
 
@@ -115,26 +115,26 @@ class CurrentTournamentSeed
 
   def self.create_test_match_picks
     puts "Creating test match picks..."
-    
+
     # Find Scottie Scheffler golfer
     scottie = Golfer.find_by(f_name: "Scottie", l_name: "Scheffler")
     return unless scottie
-    
+
     # Find user 1 (first user in the system)
     user_1 = User.first
     return unless user_1
-    
+
     # Find the three past tournaments
     past_tournaments = Tournament.where("name LIKE ?", "Past Championship%").order(:start_date)
-    
+
     past_tournaments.each_with_index do |tournament, index|
       # Create picks for all 8 golfers
-      all_golfers = [scottie] + Golfer.where.not(id: scottie.id).limit(7)
-      
+      all_golfers = [ scottie ] + Golfer.where.not(id: scottie.id).limit(7)
+
       all_golfers.each_with_index do |golfer, golfer_index|
         # Only first 2 picks (priorities 1 & 2) get drafted: true
         is_drafted = golfer_index < 2
-        
+
         MatchPick.create!(
           user_id: user_1.id,
           tournament_id: tournament.id,
@@ -143,8 +143,100 @@ class CurrentTournamentSeed
           drafted: is_drafted
         )
       end
-      
+
       puts "Created 8 picks for user #{user_1.name} in #{tournament.name} (Scottie Scheffler priority 1, drafted: true)"
     end
+
+    # Create match picks for draft window open tournament for all 4 users (for snake draft testing)
+    create_draft_window_picks
+  end
+
+  def self.create_draft_window_picks
+    puts "Creating draft window match picks for snake draft testing..."
+
+    # Find the draft window open tournament
+    draft_tournament = Tournament.find_by(name: "Draft Window Open Tournament")
+    return unless draft_tournament
+
+    # Get all 4 users
+    users = User.all.order(:id)
+    return unless users.count >= 4
+
+    # Get all golfers (we have 20 golfers created)
+    all_golfers = Golfer.all.order(:id).to_a
+
+    # Find Scottie Scheffler and Rory McIlroy (they should exist from seed)
+    scottie = Golfer.find_by(f_name: "Scottie", l_name: "Scheffler")
+    rory = Golfer.find_by(f_name: "Rory", l_name: "McIlroy")
+
+    return unless scottie && rory
+
+    # ALL USERS have same top 2 picks to create conflicts
+    # Priority 1: Scottie Scheffler
+    # Priority 2: Rory McIlroy
+    # Priority 3-8: Different golfers per user
+
+    # User 1 picks: Scottie, Rory, Tiger, Jon, Viktor, Xander, Patrick, Dustin
+    user_1_remaining_golfers = all_golfers.select do |g|
+      g.id != scottie.id && g.id != rory.id &&
+      [ "Tiger", "Jon", "Viktor", "Xander", "Patrick", "Dustin" ].include?(g.f_name)
+    end
+    create_picks_for_user(users[0], draft_tournament, scottie, rory, user_1_remaining_golfers)
+
+    # User 2 picks: Scottie, Rory, Brooks, Bryson, Justin, Collin, Jordan, Cameron
+    user_2_remaining_golfers = all_golfers.select do |g|
+      g.id != scottie.id && g.id != rory.id &&
+      [ "Brooks", "Bryson", "Justin", "Collin", "Jordan", "Cameron" ].include?(g.f_name)
+    end
+    create_picks_for_user(users[1], draft_tournament, scottie, rory, user_2_remaining_golfers)
+
+    # User 3 picks: Scottie, Rory, Tony, Max, Sam, Hideki, Joaquin, Will
+    user_3_remaining_golfers = all_golfers.select do |g|
+      g.id != scottie.id && g.id != rory.id &&
+      [ "Tony", "Max", "Sam", "Hideki", "Joaquin", "Will" ].include?(g.f_name)
+    end
+    create_picks_for_user(users[2], draft_tournament, scottie, rory, user_3_remaining_golfers)
+
+    # User 4 picks: Scottie, Rory, Tiger, Viktor, Patrick, Dustin, Brooks, Justin
+    user_4_remaining_golfers = all_golfers.select do |g|
+      g.id != scottie.id && g.id != rory.id &&
+      [ "Tiger", "Viktor", "Patrick", "Dustin", "Brooks", "Justin" ].include?(g.f_name)
+    end
+    create_picks_for_user(users[3], draft_tournament, scottie, rory, user_4_remaining_golfers)
+
+    puts "Draft window picks created successfully - all users want Scottie (priority 1) and Rory (priority 2)"
+  end
+
+  def self.create_picks_for_user(user, tournament, scottie, rory, remaining_golfers)
+    # Priority 1: Scottie
+    MatchPick.create!(
+      user_id: user.id,
+      tournament_id: tournament.id,
+      golfer_id: scottie.id,
+      priority: 1,
+      drafted: false
+    )
+
+    # Priority 2: Rory
+    MatchPick.create!(
+      user_id: user.id,
+      tournament_id: tournament.id,
+      golfer_id: rory.id,
+      priority: 2,
+      drafted: false
+    )
+
+    # Priorities 3-8: Remaining golfers (take first 6)
+    remaining_golfers.take(6).each_with_index do |golfer, index|
+      MatchPick.create!(
+        user_id: user.id,
+        tournament_id: tournament.id,
+        golfer_id: golfer.id,
+        priority: index + 3,
+        drafted: false
+      )
+    end
+
+    puts "Created 8 picks for #{user.name} in #{tournament.name} (priorities 1&2: Scottie & Rory)"
   end
 end

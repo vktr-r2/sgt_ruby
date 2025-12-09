@@ -25,8 +25,8 @@ RSpec.describe BusinessLogic::TournamentService do
 
     context 'with one tournament for the current week' do
       let!(:tournament) do
-        create(:tournament, 
-               week_number: test_date.strftime("%V").to_i, 
+        create(:tournament,
+               week_number: test_date.strftime("%V").to_i,
                year: test_date.year,
                name: 'Test Championship')
       end
@@ -179,13 +179,13 @@ RSpec.describe BusinessLogic::TournamentService do
       expect(service.is_major?('Masters Tournament')).to be true
       expect(service.is_major?('MASTERS TOURNAMENT')).to be true
       expect(service.is_major?('masters tournament')).to be true
-      
+
       expect(service.is_major?('PGA Championship')).to be true
       expect(service.is_major?('pga championship')).to be true
-      
+
       expect(service.is_major?('The Open Championship')).to be true
       expect(service.is_major?('the open championship')).to be true
-      
+
       expect(service.is_major?('U.S. Open')).to be true
       expect(service.is_major?('u.s. open')).to be true
     end
@@ -227,7 +227,7 @@ RSpec.describe BusinessLogic::TournamentService do
       end
 
       it 'returns false when one tournament exists' do
-        tournaments = [create(:tournament)]
+        tournaments = [ create(:tournament) ]
         expect(service.send(:more_than_one_current_tourn?, tournaments)).to be false
       end
 
@@ -240,7 +240,7 @@ RSpec.describe BusinessLogic::TournamentService do
     describe '#determine_more_valuable_tourn' do
       let(:low_purse_tournament) { create(:tournament, purse: 5000000) }
       let(:high_purse_tournament) { create(:tournament, purse: 15000000) }
-      let(:tournaments) { [low_purse_tournament, high_purse_tournament] }
+      let(:tournaments) { [ low_purse_tournament, high_purse_tournament ] }
 
       it 'returns the tournament with the highest purse' do
         result = service.send(:determine_more_valuable_tourn, tournaments)
@@ -249,8 +249,8 @@ RSpec.describe BusinessLogic::TournamentService do
 
       it 'handles tournaments with nil purse' do
         nil_purse_tournament = create(:tournament, purse: nil)
-        tournaments_with_nil = [nil_purse_tournament, high_purse_tournament]
-        
+        tournaments_with_nil = [ nil_purse_tournament, high_purse_tournament ]
+
         result = service.send(:determine_more_valuable_tourn, tournaments_with_nil)
         expect(result).to eq(high_purse_tournament)
       end
@@ -262,7 +262,7 @@ RSpec.describe BusinessLogic::TournamentService do
       # Test around New Year
       new_years_service = described_class.new(Date.new(2024, 1, 1))
       expect(new_years_service.send(:current_week)).to eq(1)
-      
+
       # Create tournament for week 1 of 2024
       tournament = create(:tournament, week_number: 1, year: 2024)
       expect(new_years_service.current_tournament).to eq(tournament)

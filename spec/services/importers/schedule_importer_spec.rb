@@ -9,7 +9,7 @@ RSpec.describe Importers::ScheduleImporter, type: :model do
       allow(BusinessLogic::ScheduleService).to receive(:new).and_return(schedule_service_double)
       allow(schedule_service_double).to receive(:season_start_date).and_return(Time.zone.parse('2024-01-01'))
       allow(schedule_service_double).to receive(:season_end_date).and_return(Time.zone.parse('2024-12-31'))
-      
+
       allow(Mappers::ScheduleMapper).to receive(:new).and_return(mapper_double)
       allow(mapper_double).to receive(:map_to_attributes).and_return({
         tournament_id: "valid_tournament",
@@ -45,7 +45,7 @@ RSpec.describe Importers::ScheduleImporter, type: :model do
               }
             },
             {
-              "tournamentId" => "stroke_tournament_2", 
+              "tournamentId" => "stroke_tournament_2",
               "year" => 2024,
               "name" => "Stroke Play Tournament 2",
               "format" => "stroke",
@@ -90,7 +90,7 @@ RSpec.describe Importers::ScheduleImporter, type: :model do
             },
             {
               "tournamentId" => "match_tournament",
-              "year" => 2024, 
+              "year" => 2024,
               "name" => "Match Play Tournament",
               "format" => "match",
               "date" => {
@@ -122,7 +122,7 @@ RSpec.describe Importers::ScheduleImporter, type: :model do
             {
               "tournamentId" => "in_season_tournament",
               "year" => 2024,
-              "name" => "In Season Tournament", 
+              "name" => "In Season Tournament",
               "format" => "stroke",
               "date" => {
                 "start" => {
@@ -136,7 +136,7 @@ RSpec.describe Importers::ScheduleImporter, type: :model do
               "tournamentId" => "out_of_season_tournament",
               "year" => 2023,
               "name" => "Out of Season Tournament",
-              "format" => "stroke", 
+              "format" => "stroke",
               "date" => {
                 "start" => {
                   "year" => 2023,

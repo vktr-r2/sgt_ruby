@@ -49,7 +49,7 @@ RSpec.describe 'HomeController', type: :request do
         current_tournament = json_response['current_tournament']
 
         expect(current_tournament).to include(
-          'id', 'name', 'start_date', 'end_date', 
+          'id', 'name', 'start_date', 'end_date',
           'week_number', 'year', 'format', 'draft_window'
         )
       end
@@ -64,8 +64,8 @@ RSpec.describe 'HomeController', type: :request do
         expect(draft_window).to include('start', 'end', 'status', 'is_open')
         expect(draft_window['start']).to be_present
         expect(draft_window['end']).to be_present
-        expect(draft_window['status']).to be_in(['before_window', 'open', 'after_window'])
-        expect(draft_window['is_open']).to be_in([true, false])
+        expect(draft_window['status']).to be_in([ 'before_window', 'open', 'after_window' ])
+        expect(draft_window['is_open']).to be_in([ true, false ])
       end
 
       it 'returns app info' do
@@ -83,7 +83,7 @@ RSpec.describe 'HomeController', type: :request do
         get '/', headers: auth_headers
 
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response).to include('current_tournament', 'app_info')
         expect(json_response['current_tournament']).to be_a(Hash)
         expect(json_response['app_info']).to be_a(Hash)
@@ -123,7 +123,7 @@ RSpec.describe 'HomeController', type: :request do
         get '/', headers: auth_headers
 
         json_response = JSON.parse(response.body)
-        
+
         expect(json_response).to include('current_tournament', 'app_info')
         expect(json_response['current_tournament']).to be_nil
         expect(json_response['app_info']).to be_a(Hash)
@@ -236,7 +236,7 @@ RSpec.describe 'HomeController', type: :request do
 
       it 'returns reasonable response size' do
         get '/', headers: auth_headers
-        
+
         # Response should be small and efficient
         expect(response.body.length).to be < 1000 # Less than 1KB
       end
@@ -249,7 +249,7 @@ RSpec.describe 'HomeController', type: :request do
           .to receive(:current_tournament).and_return(tournament)
 
         get '/', headers: auth_headers
-        
+
         json_response = JSON.parse(response.body)
         expect(json_response['current_tournament']['name']).to eq('a')
       end
@@ -260,7 +260,7 @@ RSpec.describe 'HomeController', type: :request do
           .to receive(:current_tournament).and_return(tournament)
 
         get '/', headers: auth_headers
-        
+
         json_response = JSON.parse(response.body)
         expect(json_response['current_tournament']['name']).to eq('AT&T Pebble Beach Pro-Am')
       end
@@ -271,7 +271,7 @@ RSpec.describe 'HomeController', type: :request do
           .to receive(:current_tournament).and_return(tournament)
 
         get '/', headers: auth_headers
-        
+
         expect(response).to have_http_status(:ok)
         json_response = JSON.parse(response.body)
         expect(json_response['current_tournament']).to be_present
@@ -288,15 +288,15 @@ RSpec.describe 'HomeController', type: :request do
 
       it 'returns valid JSON' do
         get '/', headers: auth_headers
-        
+
         expect { JSON.parse(response.body) }.not_to raise_error
       end
 
       it 'does not include sensitive information' do
         get '/', headers: auth_headers
-        
+
         json_response = JSON.parse(response.body)
-        
+
         # Should not include database-specific fields or sensitive data
         expect(json_response['current_tournament']).not_to include('created_at', 'updated_at')
         expect(json_response).not_to include('database_config', 'secrets')

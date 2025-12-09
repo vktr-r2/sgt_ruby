@@ -10,7 +10,7 @@ RSpec.describe TournamentImportJob, type: :job do
     tournament_service_double = instance_double(BusinessLogic::TournamentService)
     allow(BusinessLogic::TournamentService).to receive(:new).and_return(tournament_service_double)
     allow(tournament_service_double).to receive(:current_tournament_id).and_return(tournament_id)
-    
+
     allow(RapidApi::TournamentClient).to receive(:new).and_return(tournament_client)
     allow(tournament_client).to receive(:fetch).with(tournament_id).and_return(api_data)
     allow(Importers::TournamentImporter).to receive(:new).with(api_data).and_return(tournament_importer)
