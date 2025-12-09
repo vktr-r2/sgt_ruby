@@ -146,5 +146,83 @@ class CurrentTournamentSeed
 
       puts "Created 8 picks for user #{user_1.name} in #{tournament.name} (Scottie Scheffler priority 1, drafted: true)"
     end
+
+    # Create match picks for draft window open tournament for all 4 users (for snake draft testing)
+    create_draft_window_picks
+  end
+
+  def self.create_draft_window_picks
+    puts "Creating draft window match picks for snake draft testing..."
+
+    # Find the draft window open tournament
+    draft_tournament = Tournament.find_by(name: "Draft Window Open Tournament")
+    return unless draft_tournament
+
+    # Get all 4 users
+    users = User.all.order(:id)
+    return unless users.count >= 4
+
+    # Get all golfers (we have 20 golfers created)
+    all_golfers = Golfer.all.order(:id).to_a
+
+    # User 1 picks: Golfers 1-8 (Tiger, Rory, Jon, Scottie, Viktor, Xander, Patrick, Dustin)
+    users[0].tap do |user|
+      all_golfers[0..7].each_with_index do |golfer, index|
+        MatchPick.create!(
+          user_id: user.id,
+          tournament_id: draft_tournament.id,
+          golfer_id: golfer.id,
+          priority: index + 1,
+          drafted: false
+        )
+      end
+      puts "Created 8 picks for #{user.name} in #{draft_tournament.name}"
+    end
+
+    # User 2 picks: Golfers 9-16 (Brooks, Bryson, Justin, Collin, Jordan, Cameron, Joaquin, Will)
+    users[1].tap do |user|
+      all_golfers[8..15].each_with_index do |golfer, index|
+        MatchPick.create!(
+          user_id: user.id,
+          tournament_id: draft_tournament.id,
+          golfer_id: golfer.id,
+          priority: index + 1,
+          drafted: false
+        )
+      end
+      puts "Created 8 picks for #{user.name} in #{draft_tournament.name}"
+    end
+
+    # User 3 picks: Mix of golfers (Tony, Max, Sam, Hideki, Tiger, Rory, Jon, Scottie)
+    user_3_golfer_indices = [ 16, 17, 18, 19, 0, 1, 2, 3 ]
+    users[2].tap do |user|
+      user_3_golfer_indices.each_with_index do |golfer_index, index|
+        MatchPick.create!(
+          user_id: user.id,
+          tournament_id: draft_tournament.id,
+          golfer_id: all_golfers[golfer_index].id,
+          priority: index + 1,
+          drafted: false
+        )
+      end
+      puts "Created 8 picks for #{user.name} in #{draft_tournament.name}"
+    end
+
+    # User 4 picks: Different mix (Viktor, Xander, Patrick, Dustin, Brooks, Bryson, Justin, Collin)
+    user_4_golfer_indices = [ 4, 5, 6, 7, 8, 9, 10, 11 ]
+    users[3].tap do |user|
+      user_4_golfer_indices.each_with_index do |golfer_index, index|
+        MatchPick.create!(
+          user_id: user.id,
+          tournament_id: draft_tournament.id,
+          golfer_id: all_golfers[golfer_index].id,
+          priority: index + 1,
+          drafted: false
+        )
+      end
+      puts "Created 8 picks for #{user.name} in #{draft_tournament.name}"
+    end
+
+    puts "Draft window picks created successfully - all picks have drafted: false for snake draft testing"
   end
 end
