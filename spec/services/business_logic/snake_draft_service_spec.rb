@@ -49,11 +49,11 @@ RSpec.describe BusinessLogic::SnakeDraftService, type: :service do
 
         expect(result[:success]).to be true
         expect(result[:draft_order].length).to eq(4)
-        expect(result[:assigned_picks]).to eq(32) # 4 users * 8 picks
+        expect(result[:assigned_picks]).to eq(8) # 8 rounds total, 2 picks per user
 
-        # Verify all picks are now drafted
+        # Verify 8 picks are now drafted (2 per user)
         drafted_picks = MatchPick.where(tournament: current_tournament, drafted: true)
-        expect(drafted_picks.count).to eq(32)
+        expect(drafted_picks.count).to eq(8)
       end
     end
 
@@ -84,16 +84,15 @@ RSpec.describe BusinessLogic::SnakeDraftService, type: :service do
       it "executes snake draft pattern correctly" do
         result = service.execute_draft(current_tournament)
 
-        # Round 1 (even index=0): User1, User2, User3, User4
-        # Round 2 (odd index=1): User4, User3, User2, User1
-        # etc.
+        # Snake pattern: [4th, 3rd, 2nd, 1st, 1st, 2nd, 3rd, 4th]
+        # 8 total picks, 2 per user
 
-        expect(result[:assigned_picks]).to eq(32)
+        expect(result[:assigned_picks]).to eq(8)
 
-        # Verify all users got 8 picks
+        # Verify all users got 2 picks each
         users.each do |user|
           user_picks = MatchPick.where(user: user, tournament: current_tournament, drafted: true)
-          expect(user_picks.count).to eq(8)
+          expect(user_picks.count).to eq(2)
         end
       end
     end

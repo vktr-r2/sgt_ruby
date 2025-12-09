@@ -122,18 +122,17 @@ module BusinessLogic
       already_drafted_golfers = Set.new
       assigned_count = 0
 
-      # 8 rounds of drafting
-      8.times do |round|
-        current_order = (round.even?) ? draft_order : draft_order.reverse
+      # Create snake pattern: [4th, 3rd, 2nd, 1st] + [1st, 2nd, 3rd, 4th] = 8 picks total
+      # Each user gets exactly 2 picks
+      full_draft_order = draft_order + draft_order.reverse
 
-        current_order.each do |user|
-          pick = get_next_available_pick(user, already_drafted_golfers)
+      full_draft_order.each do |user|
+        pick = get_next_available_pick(user, already_drafted_golfers)
 
-          if pick
-            pick.update!(drafted: true)
-            already_drafted_golfers.add(pick.golfer_id)
-            assigned_count += 1
-          end
+        if pick
+          pick.update!(drafted: true)
+          already_drafted_golfers.add(pick.golfer_id)
+          assigned_count += 1
         end
       end
 
