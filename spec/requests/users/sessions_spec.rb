@@ -18,20 +18,20 @@ RSpec.describe 'Users::Sessions', type: :request do
         post '/users/sign_in', params: login_params, as: :json
 
         expect(response).to have_http_status(:ok)
-        
+
         json_response = JSON.parse(response.body)
         expect(json_response).to have_key('user')
         expect(json_response).to have_key('token')
-        
+
         user_data = json_response['user']
         expect(user_data['id']).to eq(user.id)
         expect(user_data['email']).to eq(user.email)
         expect(user_data['name']).to eq(user.name)
         expect(user_data['admin']).to eq(user.admin)
-        
+
         expect(json_response['token']).to be_present
         expect(json_response['token'].length).to eq(20)
-        
+
         # Verify token is saved to user
         user.reload
         expect(user.authentication_token).to eq(json_response['token'])
@@ -52,7 +52,7 @@ RSpec.describe 'Users::Sessions', type: :request do
         post '/users/sign_in', params: invalid_params, as: :json
 
         expect(response).to have_http_status(:unauthorized)
-        
+
         json_response = JSON.parse(response.body)
         expect(json_response['error']).to eq('Invalid credentials')
       end
@@ -87,10 +87,10 @@ RSpec.describe 'Users::Sessions', type: :request do
         delete '/users/sign_out', headers: auth_headers
 
         expect(response).to have_http_status(:ok)
-        
+
         json_response = JSON.parse(response.body)
         expect(json_response['message']).to eq('Signed out successfully')
-        
+
         # Verify token is invalidated
         user_with_token.reload
         expect(user_with_token.authentication_token).to be_nil
@@ -104,7 +104,7 @@ RSpec.describe 'Users::Sessions', type: :request do
         delete '/users/sign_out', headers: invalid_headers
 
         expect(response).to have_http_status(:unauthorized)
-        
+
         json_response = JSON.parse(response.body)
         expect(json_response['error']).to eq('Unauthorized')
       end
@@ -115,7 +115,7 @@ RSpec.describe 'Users::Sessions', type: :request do
         delete '/users/sign_out'
 
         expect(response).to have_http_status(:unauthorized)
-        
+
         json_response = JSON.parse(response.body)
         expect(json_response['error']).to eq('Unauthorized')
       end

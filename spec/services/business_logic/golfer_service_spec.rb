@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe BusinessLogic::GolferService do
   subject(:service) { described_class.new }
-  
+
   let(:tournament) { create(:tournament) }
   let(:tournament_service) { instance_double(BusinessLogic::TournamentService) }
 
@@ -44,14 +44,14 @@ RSpec.describe BusinessLogic::GolferService do
       it 'sorts golfers by last name' do
         result = service.get_current_tourn_golfers
         last_names = result.map(&:l_name)
-        expected_order = ['McIlroy', 'Rahm', 'Scott', 'Spieth', 'Woods']
+        expected_order = [ 'McIlroy', 'Rahm', 'Scott', 'Spieth', 'Woods' ]
         expect(last_names).to eq(expected_order)
       end
 
       it 'maintains golfer objects with all attributes' do
         result = service.get_current_tourn_golfers
         tiger = result.find { |g| g.f_name == 'Tiger' }
-        
+
         expect(tiger.f_name).to eq('Tiger')
         expect(tiger.l_name).to eq('Woods')
         expect(tiger.last_active_tourney).to eq(tournament.unique_id)
@@ -113,7 +113,7 @@ RSpec.describe BusinessLogic::GolferService do
       it 'handles special characters and case in sorting' do
         result = service.get_current_tourn_golfers
         last_names = result.map(&:l_name)
-        
+
         # Should be sorted alphabetically
         expect(last_names.first).to eq('Anderson')
         expect(last_names).to include('De Silva', "O'Connor", 'van der Berg', 'Żółć')
@@ -126,7 +126,7 @@ RSpec.describe BusinessLogic::GolferService do
       let(:unsorted_golfers) do
         [
           create(:golfer, l_name: 'Woods'),
-          create(:golfer, l_name: 'Adams'), 
+          create(:golfer, l_name: 'Adams'),
           create(:golfer, l_name: 'McIlroy'),
           create(:golfer, l_name: 'Spieth')
         ]
@@ -135,13 +135,13 @@ RSpec.describe BusinessLogic::GolferService do
       it 'sorts golfers by last name alphabetically' do
         sorted = service.send(:sort_golfers, unsorted_golfers)
         last_names = sorted.map(&:l_name)
-        expect(last_names).to eq(['Adams', 'McIlroy', 'Spieth', 'Woods'])
+        expect(last_names).to eq([ 'Adams', 'McIlroy', 'Spieth', 'Woods' ])
       end
 
       it 'returns the same golfers, just sorted' do
         sorted = service.send(:sort_golfers, unsorted_golfers)
         expect(sorted.count).to eq(unsorted_golfers.count)
-        
+
         unsorted_golfers.each do |golfer|
           expect(sorted).to include(golfer)
         end
@@ -153,7 +153,7 @@ RSpec.describe BusinessLogic::GolferService do
       end
 
       it 'handles single golfer' do
-        single_golfer = [create(:golfer, l_name: 'Woods')]
+        single_golfer = [ create(:golfer, l_name: 'Woods') ]
         sorted = service.send(:sort_golfers, single_golfer)
         expect(sorted).to eq(single_golfer)
       end
@@ -169,9 +169,9 @@ RSpec.describe BusinessLogic::GolferService do
     it 'handles when tournament service returns different unique_id' do
       new_tournament = create(:tournament)
       new_golfers = create_list(:golfer, 3, last_active_tourney: new_tournament.unique_id)
-      
+
       allow(tournament_service).to receive(:current_tournament_unique_id).and_return(new_tournament.unique_id)
-      
+
       result = service.get_current_tourn_golfers
       expect(result.count).to eq(3)
       expect(result.map(&:last_active_tourney)).to all(eq(new_tournament.unique_id))
@@ -182,10 +182,10 @@ RSpec.describe BusinessLogic::GolferService do
     context 'with full tournament field' do
       let!(:full_field_golfers) do
         20.times.map do |i|
-          create(:golfer, 
-                f_name: "Player#{i}", 
-                l_name: "Lastname#{i.to_s.rjust(2, '0')}", 
-                last_active_tourney: tournament.unique_id)
+          create(:golfer,
+                 f_name: "Player#{i}",
+                 l_name: "Lastname#{i.to_s.rjust(2, '0')}",
+                 last_active_tourney: tournament.unique_id)
         end
       end
 
@@ -196,7 +196,7 @@ RSpec.describe BusinessLogic::GolferService do
       it 'returns all golfers sorted correctly' do
         result = service.get_current_tourn_golfers
         expect(result.count).to eq(20)
-        
+
         # Check that it's sorted
         last_names = result.map(&:l_name)
         expect(last_names).to eq(last_names.sort)

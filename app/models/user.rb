@@ -9,27 +9,31 @@ class User < ApplicationRecord
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable
 
+  # Associations
+  has_many :match_picks, dependent: :destroy
+  has_many :match_results, dependent: :destroy
+
   validates :name, presence: true
   validates :authentication_token, uniqueness: true, allow_nil: true
-  
+
   def ensure_authentication_token!
     self.authentication_token = generate_authentication_token if authentication_token.blank?
     save!
   end
 
   private
-  
+
   def ensure_authentication_token
     self.authentication_token = generate_authentication_token if authentication_token.blank?
   end
-  
+
   def generate_authentication_token
     loop do
       token = Devise.friendly_token
       break token unless User.where(authentication_token: token).first
     end
   end
-  
+
   def set_admin_status
     self.admin = ADMIN_EMAILS.include?(email)
   end

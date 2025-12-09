@@ -10,7 +10,7 @@ module Importers
       @sched_data["schedule"].each do |sched_tourn|
         # Convert API date format to Time object
         tournament_start_date = ApplicationHelper::DateOperations.date_hash_to_time_obj(sched_tourn["date"]["start"])
-        
+
         # Check if tournament is stroke play and within season start and end date
         next if sched_tourn["format"] != "stroke" || tournament_start_date < @season_start_date || tournament_start_date > @season_end_date
         mapped_data = Mappers::ScheduleMapper.new(sched_tourn).map_to_attributes
