@@ -165,64 +165,78 @@ class CurrentTournamentSeed
     # Get all golfers (we have 20 golfers created)
     all_golfers = Golfer.all.order(:id).to_a
 
-    # User 1 picks: Golfers 1-8 (Tiger, Rory, Jon, Scottie, Viktor, Xander, Patrick, Dustin)
-    users[0].tap do |user|
-      all_golfers[0..7].each_with_index do |golfer, index|
-        MatchPick.create!(
-          user_id: user.id,
-          tournament_id: draft_tournament.id,
-          golfer_id: golfer.id,
-          priority: index + 1,
-          drafted: false
-        )
-      end
-      puts "Created 8 picks for #{user.name} in #{draft_tournament.name}"
+    # Find Scottie Scheffler and Rory McIlroy (they should exist from seed)
+    scottie = Golfer.find_by(f_name: "Scottie", l_name: "Scheffler")
+    rory = Golfer.find_by(f_name: "Rory", l_name: "McIlroy")
+
+    return unless scottie && rory
+
+    # ALL USERS have same top 2 picks to create conflicts
+    # Priority 1: Scottie Scheffler
+    # Priority 2: Rory McIlroy
+    # Priority 3-8: Different golfers per user
+
+    # User 1 picks: Scottie, Rory, Tiger, Jon, Viktor, Xander, Patrick, Dustin
+    user_1_remaining_golfers = all_golfers.select do |g|
+      g.id != scottie.id && g.id != rory.id &&
+      [ "Tiger", "Jon", "Viktor", "Xander", "Patrick", "Dustin" ].include?(g.f_name)
+    end
+    create_picks_for_user(users[0], draft_tournament, scottie, rory, user_1_remaining_golfers)
+
+    # User 2 picks: Scottie, Rory, Brooks, Bryson, Justin, Collin, Jordan, Cameron
+    user_2_remaining_golfers = all_golfers.select do |g|
+      g.id != scottie.id && g.id != rory.id &&
+      [ "Brooks", "Bryson", "Justin", "Collin", "Jordan", "Cameron" ].include?(g.f_name)
+    end
+    create_picks_for_user(users[1], draft_tournament, scottie, rory, user_2_remaining_golfers)
+
+    # User 3 picks: Scottie, Rory, Tony, Max, Sam, Hideki, Joaquin, Will
+    user_3_remaining_golfers = all_golfers.select do |g|
+      g.id != scottie.id && g.id != rory.id &&
+      [ "Tony", "Max", "Sam", "Hideki", "Joaquin", "Will" ].include?(g.f_name)
+    end
+    create_picks_for_user(users[2], draft_tournament, scottie, rory, user_3_remaining_golfers)
+
+    # User 4 picks: Scottie, Rory, Tiger, Viktor, Patrick, Dustin, Brooks, Justin
+    user_4_remaining_golfers = all_golfers.select do |g|
+      g.id != scottie.id && g.id != rory.id &&
+      [ "Tiger", "Viktor", "Patrick", "Dustin", "Brooks", "Justin" ].include?(g.f_name)
+    end
+    create_picks_for_user(users[3], draft_tournament, scottie, rory, user_4_remaining_golfers)
+
+    puts "Draft window picks created successfully - all users want Scottie (priority 1) and Rory (priority 2)"
+  end
+
+  def self.create_picks_for_user(user, tournament, scottie, rory, remaining_golfers)
+    # Priority 1: Scottie
+    MatchPick.create!(
+      user_id: user.id,
+      tournament_id: tournament.id,
+      golfer_id: scottie.id,
+      priority: 1,
+      drafted: false
+    )
+
+    # Priority 2: Rory
+    MatchPick.create!(
+      user_id: user.id,
+      tournament_id: tournament.id,
+      golfer_id: rory.id,
+      priority: 2,
+      drafted: false
+    )
+
+    # Priorities 3-8: Remaining golfers (take first 6)
+    remaining_golfers.take(6).each_with_index do |golfer, index|
+      MatchPick.create!(
+        user_id: user.id,
+        tournament_id: tournament.id,
+        golfer_id: golfer.id,
+        priority: index + 3,
+        drafted: false
+      )
     end
 
-    # User 2 picks: Golfers 9-16 (Brooks, Bryson, Justin, Collin, Jordan, Cameron, Joaquin, Will)
-    users[1].tap do |user|
-      all_golfers[8..15].each_with_index do |golfer, index|
-        MatchPick.create!(
-          user_id: user.id,
-          tournament_id: draft_tournament.id,
-          golfer_id: golfer.id,
-          priority: index + 1,
-          drafted: false
-        )
-      end
-      puts "Created 8 picks for #{user.name} in #{draft_tournament.name}"
-    end
-
-    # User 3 picks: Mix of golfers (Tony, Max, Sam, Hideki, Tiger, Rory, Jon, Scottie)
-    user_3_golfer_indices = [ 16, 17, 18, 19, 0, 1, 2, 3 ]
-    users[2].tap do |user|
-      user_3_golfer_indices.each_with_index do |golfer_index, index|
-        MatchPick.create!(
-          user_id: user.id,
-          tournament_id: draft_tournament.id,
-          golfer_id: all_golfers[golfer_index].id,
-          priority: index + 1,
-          drafted: false
-        )
-      end
-      puts "Created 8 picks for #{user.name} in #{draft_tournament.name}"
-    end
-
-    # User 4 picks: Different mix (Viktor, Xander, Patrick, Dustin, Brooks, Bryson, Justin, Collin)
-    user_4_golfer_indices = [ 4, 5, 6, 7, 8, 9, 10, 11 ]
-    users[3].tap do |user|
-      user_4_golfer_indices.each_with_index do |golfer_index, index|
-        MatchPick.create!(
-          user_id: user.id,
-          tournament_id: draft_tournament.id,
-          golfer_id: all_golfers[golfer_index].id,
-          priority: index + 1,
-          drafted: false
-        )
-      end
-      puts "Created 8 picks for #{user.name} in #{draft_tournament.name}"
-    end
-
-    puts "Draft window picks created successfully - all picks have drafted: false for snake draft testing"
+    puts "Created 8 picks for #{user.name} in #{tournament.name} (priorities 1&2: Scottie & Rory)"
   end
 end
