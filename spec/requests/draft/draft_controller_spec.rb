@@ -500,15 +500,15 @@ RSpec.describe 'Draft::DraftController', type: :request do
             end
           end
 
-          it 'allows the submission (non-drafted picks do not count)' do
+          it 'rejects the submission (all picks count regardless of drafted status)' do
             picks_with_scottie = [ { golfer_id: scottie.id } ] +
                                golfers[1..7].map { |g| { golfer_id: g.id } }
 
             post '/draft/submit', params: { picks: picks_with_scottie }, headers: auth_headers, as: :json
 
-            expect(response).to have_http_status(:ok)
+            expect(response).to have_http_status(:unprocessable_entity)
             json_response = JSON.parse(response.body)
-            expect(json_response['message']).to eq('Picks submitted successfully!')
+            expect(json_response['error']).to include('Scottie Scheffler rule violation')
           end
         end
       end
