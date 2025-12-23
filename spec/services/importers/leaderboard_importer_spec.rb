@@ -68,5 +68,34 @@ RSpec.describe Importers::LeaderboardImporter do
       expect(scores.count).to eq(2) # Still only 2 records
       expect(scores.second.score).to eq(65) # Updated score
     end
+
+    it "handles cut players by copying day 1 to day 3 and day 2 to day 4" do
+      match_pick # Ensure match_pick exists
+
+      cut_player_data = {
+        "leaderboardRows" => [
+          {
+            "playerId" => "46046",
+            "firstName" => "Scottie",
+            "lastName" => "Scheffler",
+            "status" => "cut",
+            "rounds" => [
+              { "roundId" => { "$numberInt" => "1" }, "strokes" => { "$numberInt" => "75" } },
+              { "roundId" => { "$numberInt" => "2" }, "strokes" => { "$numberInt" => "76" } }
+            ]
+          }
+        ]
+      }
+
+      importer = described_class.new(cut_player_data, tournament)
+      importer.process
+
+      scores = Score.where(match_pick: match_pick).order(:round)
+      expect(scores.count).to eq(4) # All 4 rounds created
+      expect(scores.find_by(round: 1).score).to eq(75)
+      expect(scores.find_by(round: 2).score).to eq(76)
+      expect(scores.find_by(round: 3).score).to eq(75) # Copied from round 1
+      expect(scores.find_by(round: 4).score).to eq(76) # Copied from round 2
+    end
   end
 end
