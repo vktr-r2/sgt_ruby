@@ -77,7 +77,7 @@ module Importers
         save_score(score)
       end
 
-      # Copy scores for missed rounds (day 1 ’ day 3, day 2 ’ day 4)
+      # Copy scores for missed rounds (day 1 to day 3, day 2 to day 4)
       copy_score_if_missing(match_pick, from_round: 1, to_round: 3)
       copy_score_if_missing(match_pick, from_round: 2, to_round: 4)
     end
