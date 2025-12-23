@@ -37,5 +37,36 @@ RSpec.describe Importers::LeaderboardImporter do
       expect(scores.second.round).to eq(2)
       expect(scores.second.score).to eq(68)
     end
+
+    it "updates existing score records on second API call" do
+      match_pick # Ensure match_pick exists
+
+      # First API call - create initial scores
+      importer = described_class.new(leaderboard_data, tournament)
+      importer.process
+
+      # Second API call - golfer's score changed
+      updated_data = {
+        "leaderboardRows" => [
+          {
+            "playerId" => "46046",
+            "firstName" => "Scottie",
+            "lastName" => "Scheffler",
+            "status" => "complete",
+            "rounds" => [
+              { "roundId" => { "$numberInt" => "1" }, "strokes" => { "$numberInt" => "70" } },
+              { "roundId" => { "$numberInt" => "2" }, "strokes" => { "$numberInt" => "65" } } # Changed from 68 to 65
+            ]
+          }
+        ]
+      }
+
+      importer2 = described_class.new(updated_data, tournament)
+      importer2.process
+
+      scores = Score.where(match_pick: match_pick).order(:round)
+      expect(scores.count).to eq(2) # Still only 2 records
+      expect(scores.second.score).to eq(65) # Updated score
+    end
   end
 end
