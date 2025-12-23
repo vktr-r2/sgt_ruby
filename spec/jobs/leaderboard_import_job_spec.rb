@@ -24,4 +24,19 @@ RSpec.describe LeaderboardImportJob, type: :job do
     expect(Importers::LeaderboardImporter).to have_received(:new).with(api_data, tournament)
     expect(leaderboard_importer).to have_received(:process)
   end
+
+  context "when tournament is blank" do
+    before do
+      tournament_service_double = instance_double(BusinessLogic::TournamentService)
+      allow(BusinessLogic::TournamentService).to receive(:new).and_return(tournament_service_double)
+      allow(tournament_service_double).to receive(:current_tournament).and_return(nil)
+    end
+
+    it "does not fetch leaderboard data" do
+      described_class.perform_now
+
+      expect(leaderboard_client).not_to have_received(:fetch)
+      expect(Importers::LeaderboardImporter).not_to have_received(:new)
+    end
+  end
 end
