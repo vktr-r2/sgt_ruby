@@ -39,4 +39,15 @@ RSpec.describe LeaderboardImportJob, type: :job do
       expect(Importers::LeaderboardImporter).not_to have_received(:new)
     end
   end
+
+  context "when API data is blank" do
+    let(:api_data) { nil }
+
+    it "does not process leaderboard import" do
+      described_class.perform_now
+
+      expect(leaderboard_client).to have_received(:fetch).with(tournament.tournament_id)
+      expect(Importers::LeaderboardImporter).not_to have_received(:new)
+    end
+  end
 end
