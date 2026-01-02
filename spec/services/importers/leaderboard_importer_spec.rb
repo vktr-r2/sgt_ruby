@@ -145,4 +145,49 @@ RSpec.describe Importers::LeaderboardImporter do
       expect(scores.find_by(round: 4).score).to eq(68)
     end
   end
+
+  describe "#determine_current_round" do
+    it "uses top-level roundId from API response" do
+      data_with_top_level_round = {
+        "roundId" => { "$numberInt" => "3" },
+        "leaderboardRows" => [
+          {
+            "playerId" => "46046",
+            "status" => "active",
+            "rounds" => [
+              { "roundId" => { "$numberInt" => "1" }, "strokes" => { "$numberInt" => "70" } },
+              { "roundId" => { "$numberInt" => "2" }, "strokes" => { "$numberInt" => "68" } }
+            ]
+          }
+        ]
+      }
+
+      importer = described_class.new(data_with_top_level_round, tournament)
+      current_round = importer.send(:determine_current_round)
+
+      # Should use top-level roundId (3), not max from player rounds (2)
+      expect(current_round).to eq(3)
+    end
+
+    it "falls back to player rounds when top-level roundId missing" do
+      data_without_top_level_round = {
+        "leaderboardRows" => [
+          {
+            "playerId" => "46046",
+            "status" => "active",
+            "rounds" => [
+              { "roundId" => { "$numberInt" => "1" }, "strokes" => { "$numberInt" => "70" } },
+              { "roundId" => { "$numberInt" => "2" }, "strokes" => { "$numberInt" => "68" } }
+            ]
+          }
+        ]
+      }
+
+      importer = described_class.new(data_without_top_level_round, tournament)
+      current_round = importer.send(:determine_current_round)
+
+      # Should fall back to max round from player rounds (2)
+      expect(current_round).to eq(2)
+    end
+  end
 end
