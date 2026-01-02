@@ -33,3 +33,7 @@
     leaderboard_import_job_evening:
       cron: "0 20 * * *" # Runs daily at 8:00 PM EST during tournaments
       class: "LeaderboardImportJob"
+
+    match_results_job:
+      cron: "0 0 * * 1" # Runs every Monday at 00:00:00 EST after tournament ends
+      class: "MatchResultsJob"
