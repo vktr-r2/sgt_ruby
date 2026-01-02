@@ -1,7 +1,7 @@
 require "rails_helper"
 
 RSpec.describe BusinessLogic::MatchResultsCalculationService do
-  let(:tournament) { create(:tournament, tournament_id: "475", name: "Valspar Championship", tournament_major: false) }
+  let(:tournament) { create(:tournament, tournament_id: "475", name: "Valspar Championship", major_championship: false) }
   let(:users) { create_list(:user, 4) }
 
   # Create golfers for testing
