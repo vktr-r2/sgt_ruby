@@ -64,6 +64,12 @@ module Importers
           round: round_number
         )
 
+        # If this is a replacement and score already exists from original golfer, preserve it
+        if match_pick.original_golfer_id.present? && !score.new_record?
+          Rails.logger.info "Preserving original golfer's score for round #{round_number} (match_pick_id: #{match_pick.id})"
+          next
+        end
+
         score.score = strokes
         score.status = player_status
         score.position = player_position
