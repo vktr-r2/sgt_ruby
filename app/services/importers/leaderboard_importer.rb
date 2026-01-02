@@ -37,10 +37,8 @@ module Importers
       player_position = player_data["position"]
       player_status = player_data["status"]
 
-      # Check if player was cut
-      was_cut = player_status == "cut" || player_status == "wd"
-
-      if was_cut
+      # Handle cut players (WD players already replaced in step 1)
+      if player_status == "cut"
         handle_cut_player(match_pick, player_data, player_status, player_position)
       else
         save_round_scores(match_pick, player_data["rounds"], player_status, player_position)
