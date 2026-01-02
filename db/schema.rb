@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_25_181145) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_02_024343) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -56,7 +56,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_25_181145) do
     t.integer "round", default: 1
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "position"
+    t.string "status", default: "active"
     t.index ["match_pick_id"], name: "index_scores_on_match_pick_id"
+    t.index ["status"], name: "index_scores_on_status"
   end
 
   create_table "tournaments", force: :cascade do |t|
