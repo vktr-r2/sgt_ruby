@@ -127,12 +127,13 @@ RSpec.describe BusinessLogic::GolferLimitValidationService, type: :model do
         create(:match_pick, user: user, tournament: tournament3, golfer: scottie, drafted: false)
       end
 
-      it 'only counts drafted picks' do
+      it 'counts all picks regardless of drafted status' do
         service = described_class.new(user.id, [ scottie.id ])
         result = service.validate
 
-        expect(result[:valid]).to be true
-        expect(result[:violations]).to be_empty
+        expect(result[:valid]).to be false
+        expect(result[:violations]).not_to be_empty
+        expect(result[:violations].first[:message]).to include('Scottie Scheffler rule violation')
       end
     end
 
