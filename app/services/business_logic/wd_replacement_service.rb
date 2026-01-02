@@ -37,20 +37,19 @@ module BusinessLogic
       last_position = get_last_known_position(match_pick)
 
       if last_position.nil?
-        # Early WD - no previous API call
-        eligible_golfers = get_all_undrafted_golfers
+        # Early WD - no previous API call, use any golfer from leaderboard
+        eligible_golfers = find_eligible_replacement_golfers("1", leaderboard_data)
         reason = "wd_early"
       else
         # Normal WD - find golfers at same/worse position
         eligible_golfers = find_eligible_replacement_golfers(last_position, leaderboard_data)
-
-        # Fallback to all undrafted if no eligible golfers at position
-        if eligible_golfers.empty?
-          Rails.logger.warn "No golfers at position #{last_position}+, falling back to all undrafted"
-          eligible_golfers = get_all_undrafted_golfers
-        end
-
         reason = "wd"
+      end
+
+      # Fallback to all undrafted tournament golfers if leaderboard has none
+      if eligible_golfers.empty?
+        Rails.logger.warn "No eligible golfers in leaderboard, falling back to all undrafted in tournament"
+        eligible_golfers = get_all_undrafted_golfers
       end
 
       if eligible_golfers.empty?
