@@ -127,7 +127,7 @@ module Importers
 
         player["rounds"].each do |round_data|
           round_num = extract_int_from_api(round_data["roundId"])
-          max_round = [max_round, round_num].max if round_num
+          max_round = [ max_round, round_num ].max if round_num
         end
       end
 
