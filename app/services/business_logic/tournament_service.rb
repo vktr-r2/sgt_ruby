@@ -37,6 +37,13 @@ module BusinessLogic
       MAJORS.include?(name.downcase)
     end
 
+    def previous_tournament
+      # Get the most recently completed tournament (ended yesterday or before)
+      Tournament.where("end_date < ?", @date)
+                .order(end_date: :desc)
+                .first
+    end
+
     def previous_tournament_with_results(tournament = nil)
       tournament ||= current_tournament
       return nil unless tournament
