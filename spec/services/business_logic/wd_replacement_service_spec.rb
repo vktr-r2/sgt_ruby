@@ -68,5 +68,70 @@ RSpec.describe BusinessLogic::WdReplacementService do
         expect(match_pick.replacement_reason).to eq("wd")
       end
     end
+
+    context "when golfer withdraws early (before first API call)" do
+      it "uses randomizer with all undrafted golfers" do
+        # No prior scores - early WD scenario
+        # Ensure both golfers exist and replacement is available
+        match_pick # Creates wd_golfer via association
+        replacement_golfer # Ensures it exists
+
+        service = described_class.new(tournament, 1)
+        service.detect_and_replace_wd_golfers(leaderboard_data)
+
+        match_pick.reload
+
+        # Should have been replaced (golfer changed)
+        expect(match_pick.golfer_id).to eq(replacement_golfer.id)
+        expect(match_pick.original_golfer_id).to eq(wd_golfer.id)
+        expect(match_pick.replaced_at_round).to eq(1)
+        expect(match_pick.replacement_reason).to eq("wd_early")
+      end
+    end
+
+    context "when golfer already replaced" do
+      it "skips duplicate replacement" do
+        # Setup: match_pick already has a replacement
+        original_replacement = create(:golfer, source_id: "99999")
+        match_pick.update!(original_golfer_id: wd_golfer.id, golfer_id: original_replacement.id, replacement_reason: "wd")
+
+        replacement_golfer # Ensure second potential replacement exists
+
+        service = described_class.new(tournament, 2)
+        service.detect_and_replace_wd_golfers(leaderboard_data)
+
+        match_pick.reload
+
+        # Should NOT change to second replacement
+        expect(match_pick.golfer_id).to eq(original_replacement.id)
+        expect(match_pick.original_golfer_id).to eq(wd_golfer.id)
+      end
+    end
+  end
+
+  describe "#parse_position_for_comparison" do
+    let(:service) { described_class.new(tournament, 1) }
+
+    it "parses tied positions correctly" do
+      expect(service.send(:parse_position_for_comparison, "T5")).to eq(5)
+      expect(service.send(:parse_position_for_comparison, "T20")).to eq(20)
+    end
+
+    it "parses numeric positions correctly" do
+      expect(service.send(:parse_position_for_comparison, "1")).to eq(1)
+      expect(service.send(:parse_position_for_comparison, "15")).to eq(15)
+    end
+
+    it "treats CUT as worst position" do
+      expect(service.send(:parse_position_for_comparison, "CUT")).to eq(Float::INFINITY)
+    end
+
+    it "treats WD as worst position" do
+      expect(service.send(:parse_position_for_comparison, "WD")).to eq(Float::INFINITY)
+    end
+
+    it "treats nil as worst position" do
+      expect(service.send(:parse_position_for_comparison, nil)).to eq(Float::INFINITY)
+    end
   end
 end
