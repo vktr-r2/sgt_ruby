@@ -31,5 +31,20 @@ FactoryBot.define do
     trait :round_4 do
       round { 4 }
     end
+
+    trait :with_position do
+      position { "T#{rand(1..20)}" }
+      status { "active" }
+    end
+
+    trait :withdrawn do
+      status { "wd" }
+      position { "WD" }
+    end
+
+    trait :cut do
+      status { "cut" }
+      position { "CUT" }
+    end
   end
 end
