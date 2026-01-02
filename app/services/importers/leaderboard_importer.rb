@@ -125,6 +125,13 @@ module Importers
     end
 
     def determine_current_round
+      # Try to get current round from top-level API data first
+      if @leaderboard_data && @leaderboard_data["roundId"]
+        round_from_api = extract_int_from_api(@leaderboard_data["roundId"])
+        return round_from_api if round_from_api
+      end
+
+      # Fallback to checking player rounds
       max_round = 1
       return max_round unless @leaderboard_data && @leaderboard_data["leaderboardRows"]
 
