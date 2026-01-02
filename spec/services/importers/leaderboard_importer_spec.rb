@@ -97,5 +97,52 @@ RSpec.describe Importers::LeaderboardImporter do
       expect(scores.find_by(round: 3).score).to eq(75) # Copied from round 1
       expect(scores.find_by(round: 4).score).to eq(76) # Copied from round 2
     end
+
+    it "preserves original golfer's scores when replacement occurs mid-tournament" do
+      # Setup: Original golfer (Scottie) completes round 1
+      original_golfer = golfer
+      create(:score, match_pick: match_pick, round: 1, score: 75, position: "T45", status: "active")
+
+      # Simulate WD replacement: Scottie replaced by Justin Thomas after round 1
+      replacement_golfer = create(:golfer, source_id: "33448", f_name: "Justin", l_name: "Thomas")
+      match_pick.update!(
+        original_golfer_id: original_golfer.id,
+        golfer_id: replacement_golfer.id,
+        replaced_at_round: 2,
+        replacement_reason: "wd"
+      )
+
+      # API returns replacement golfer's scores for all rounds
+      replacement_data = {
+        "leaderboardRows" => [
+          {
+            "playerId" => "33448", # Justin Thomas
+            "firstName" => "Justin",
+            "lastName" => "Thomas",
+            "status" => "complete",
+            "rounds" => [
+              { "roundId" => { "$numberInt" => "1" }, "strokes" => { "$numberInt" => "73" } }, # Different from original
+              { "roundId" => { "$numberInt" => "2" }, "strokes" => { "$numberInt" => "70" } },
+              { "roundId" => { "$numberInt" => "3" }, "strokes" => { "$numberInt" => "69" } },
+              { "roundId" => { "$numberInt" => "4" }, "strokes" => { "$numberInt" => "68" } }
+            ]
+          }
+        ]
+      }
+
+      importer = described_class.new(replacement_data, tournament)
+      importer.process
+
+      scores = Score.where(match_pick: match_pick).order(:round)
+      expect(scores.count).to eq(4)
+
+      # Round 1: Original golfer's score preserved (75, not 73)
+      expect(scores.find_by(round: 1).score).to eq(75)
+
+      # Rounds 2-4: Replacement golfer's scores
+      expect(scores.find_by(round: 2).score).to eq(70)
+      expect(scores.find_by(round: 3).score).to eq(69)
+      expect(scores.find_by(round: 4).score).to eq(68)
+    end
   end
 end
