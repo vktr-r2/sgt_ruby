@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_02_024343) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_02_025207) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -32,7 +32,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_02_024343) do
     t.boolean "drafted", default: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "original_golfer_id"
+    t.integer "replaced_at_round"
+    t.string "replacement_reason"
     t.index ["golfer_id"], name: "index_match_picks_on_golfer_id"
+    t.index ["original_golfer_id"], name: "index_match_picks_on_original_golfer_id"
     t.index ["tournament_id"], name: "index_match_picks_on_tournament_id"
     t.index ["user_id"], name: "index_match_picks_on_user_id"
   end
@@ -100,6 +104,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_02_024343) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "match_picks", "golfers", column: "original_golfer_id", on_delete: :nullify
   add_foreign_key "match_picks", "golfers", on_delete: :cascade
   add_foreign_key "match_picks", "tournaments", on_delete: :cascade
   add_foreign_key "match_picks", "users", on_delete: :cascade
