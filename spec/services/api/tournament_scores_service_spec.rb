@@ -111,7 +111,7 @@ RSpec.describe Api::TournamentScoresService do
       end
 
       it "handles cut golfers" do
-        cut_match_pick = users.first.match_picks.drafted.first
+        cut_match_pick = users.first.match_picks.where(drafted: true).first
         cut_match_pick.scores.update_all(status: "cut")
 
         result = described_class.call
@@ -123,7 +123,7 @@ RSpec.describe Api::TournamentScoresService do
       end
 
       it "handles withdrawn golfers" do
-        wd_match_pick = users.first.match_picks.drafted.first
+        wd_match_pick = users.first.match_picks.where(drafted: true).first
         wd_match_pick.scores.update_all(status: "wd")
 
         result = described_class.call

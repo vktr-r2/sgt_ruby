@@ -33,15 +33,10 @@ Rails.application.routes.draw do
   end
 
   namespace :api do
-    namespace :tournaments do
-      get "current/scores", to: "tournaments#current_scores"
-      get "history", to: "tournaments#history"
-      get ":id/results", to: "tournaments#show_results"
-    end
-
-    namespace :standings do
-      get "season", to: "standings#season"
-    end
+    get "tournaments/current/scores", to: "tournaments#current_scores"
+    get "tournaments/history", to: "tournaments#history"
+    get "tournaments/:id/results", to: "tournaments#show_results"
+    get "standings/season", to: "standings#season"
   end
 
 end
