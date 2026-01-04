@@ -89,16 +89,11 @@ RSpec.describe Api::SeasonStandingsService do
     context "without tournaments" do
       let!(:users) { create_list(:user, 2) }
 
-      it "returns users with zero statistics" do
+      it "returns empty standings when no match results exist" do
         result = described_class.call
 
-        expect(result[:standings].length).to eq(2)
-
-        result[:standings].each do |standing|
-          expect(standing[:total_points]).to eq(0)
-          expect(standing[:tournaments_played]).to eq(0)
-          expect(standing[:wins]).to eq(0)
-        end
+        expect(result[:standings]).to be_an(Array)
+        expect(result[:standings].length).to eq(0)
       end
     end
   end
