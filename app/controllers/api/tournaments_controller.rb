@@ -8,8 +8,8 @@ module Api
     end
 
     def history
-      page = [params[:page]&.to_i || 1, 1].max
-      per_page = [[params[:per_page]&.to_i || 10, 50].min, 1].max
+      page = [ params[:page]&.to_i || 1, 1 ].max
+      per_page = [ [ params[:per_page]&.to_i || 10, 50 ].min, 1 ].max
       year = params[:year]&.to_i
 
       query = Tournament.where("end_date < ?", Date.current).order(start_date: :desc)
