@@ -66,8 +66,8 @@ module Api
                           .where("tournaments.major_championship = ?", true)
                           .where("EXTRACT(YEAR FROM tournaments.start_date) = ?", year)
                           .group(:user_id)
-                          .select('user_id, COUNT(*) as count')
-                          .order('count DESC')
+                          .select("user_id, COUNT(*) as count")
+                          .order("count DESC")
                           .first
 
       return nil unless result
