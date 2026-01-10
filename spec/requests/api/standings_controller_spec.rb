@@ -112,4 +112,206 @@ RSpec.describe "Api::StandingsController", type: :request do
       end
     end
   end
+
+  describe "GET /api/standings/seasons" do
+    context "with authentication" do
+      context "with multiple completed seasons" do
+        let!(:users) { create_list(:user, 4) }
+
+        # Create 2025 season (2 tournaments)
+        let!(:tournament_2025_1) do
+          create(:tournament,
+            name: "The Masters 2025",
+            year: 2025,
+            start_date: Date.new(2025, 1, 10),
+            end_date: Date.new(2025, 1, 13),
+            major_championship: true)
+        end
+
+        let!(:tournament_2025_2) do
+          create(:tournament,
+            name: "PGA Championship 2025",
+            year: 2025,
+            start_date: Date.new(2025, 1, 17),
+            end_date: Date.new(2025, 1, 20),
+            major_championship: false)
+        end
+
+        # Create 2024 season (1 tournament)
+        let!(:tournament_2024_1) do
+          create(:tournament,
+            name: "Genesis Invitational 2024",
+            year: 2024,
+            start_date: Date.new(2024, 1, 10),
+            end_date: Date.new(2024, 1, 13),
+            major_championship: false)
+        end
+
+        before do
+          # 2025 Results
+          create(:match_result, :first_place, user: users[0], tournament: tournament_2025_1)
+          create(:match_result, :second_place, user: users[1], tournament: tournament_2025_1)
+          create(:match_result, :third_place, user: users[2], tournament: tournament_2025_1)
+          create(:match_result, :fourth_place, user: users[3], tournament: tournament_2025_1)
+
+          create(:match_result, :second_place, user: users[0], tournament: tournament_2025_2)
+          create(:match_result, :first_place, user: users[1], tournament: tournament_2025_2)
+          create(:match_result, :third_place, user: users[2], tournament: tournament_2025_2)
+          create(:match_result, :fourth_place, user: users[3], tournament: tournament_2025_2)
+
+          # 2024 Results
+          create(:match_result, :first_place, user: users[2], tournament: tournament_2024_1)
+          create(:match_result, :second_place, user: users[0], tournament: tournament_2024_1)
+          create(:match_result, :third_place, user: users[1], tournament: tournament_2024_1)
+          create(:match_result, :fourth_place, user: users[3], tournament: tournament_2024_1)
+        end
+
+        it "returns successful response" do
+          get "/api/standings/seasons", headers: headers
+          expect(response).to have_http_status(:ok)
+        end
+
+        it "returns seasons in descending year order" do
+          get "/api/standings/seasons", headers: headers
+          json_response = JSON.parse(response.body)
+
+          expect(json_response["success"]).to be true
+          expect(json_response["data"]).to have_key("seasons")
+
+          seasons = json_response["data"]["seasons"]
+          expect(seasons.length).to eq(2)
+
+          years = seasons.map { |s| s["year"] }
+          expect(years).to eq([2025, 2024])
+        end
+
+        it "includes all required fields per season" do
+          get "/api/standings/seasons", headers: headers
+          json_response = JSON.parse(response.body)
+
+          season = json_response["data"]["seasons"].first
+
+          expect(season).to have_key("year")
+          expect(season).to have_key("tournament_count")
+          expect(season).to have_key("season_winner")
+          expect(season).to have_key("standings_preview")
+          expect(season).to have_key("majors_won")
+          expect(season).to have_key("total_winners_picked")
+          expect(season).to have_key("total_cuts_missed")
+
+          # Check season_winner structure
+          expect(season["season_winner"]).to have_key("user_id")
+          expect(season["season_winner"]).to have_key("username")
+          expect(season["season_winner"]).to have_key("total_points")
+
+          # Check standings_preview includes all 4 users
+          expect(season["standings_preview"].length).to eq(4)
+        end
+      end
+
+      context "with no completed seasons" do
+        it "returns empty array when no completed seasons exist" do
+          get "/api/standings/seasons", headers: headers
+          json_response = JSON.parse(response.body)
+
+          expect(json_response["success"]).to be true
+          expect(json_response["data"]["seasons"]).to be_an(Array)
+          expect(json_response["data"]["seasons"]).to be_empty
+        end
+      end
+    end
+
+    context "without authentication" do
+      it "returns 401 unauthorized" do
+        get "/api/standings/seasons"
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+  end
+
+  describe "GET /api/standings/season/:year" do
+    context "with authentication" do
+      context "with valid year" do
+        let!(:users) { create_list(:user, 3) }
+
+        let!(:tournament_1) do
+          create(:tournament,
+            name: "The Masters",
+            year: 2025,
+            start_date: Date.new(2025, 4, 10),
+            end_date: Date.new(2025, 4, 13),
+            major_championship: true)
+        end
+
+        let!(:tournament_2) do
+          create(:tournament,
+            name: "Genesis Invitational",
+            year: 2025,
+            start_date: Date.new(2025, 2, 15),
+            end_date: Date.new(2025, 2, 18),
+            major_championship: false)
+        end
+
+        before do
+          create(:match_result, :first_place, user: users[0], tournament: tournament_1)
+          create(:match_result, :second_place, user: users[1], tournament: tournament_1)
+          create(:match_result, :third_place, user: users[2], tournament: tournament_1)
+
+          create(:match_result, :second_place, user: users[0], tournament: tournament_2)
+          create(:match_result, :first_place, user: users[1], tournament: tournament_2)
+          create(:match_result, :third_place, user: users[2], tournament: tournament_2)
+        end
+
+        it "returns successful response" do
+          get "/api/standings/season/2025", headers: headers
+          expect(response).to have_http_status(:ok)
+        end
+
+        it "includes standings with majors_won field" do
+          get "/api/standings/season/2025", headers: headers
+          json_response = JSON.parse(response.body)
+
+          expect(json_response["success"]).to be true
+          expect(json_response["data"]).to have_key("standings")
+
+          first_standing = json_response["data"]["standings"].first
+          expect(first_standing).to have_key("majors_won")
+        end
+
+        it "includes tournaments list" do
+          get "/api/standings/season/2025", headers: headers
+          json_response = JSON.parse(response.body)
+
+          expect(json_response["data"]).to have_key("tournaments")
+          tournaments = json_response["data"]["tournaments"]
+
+          expect(tournaments.length).to eq(2)
+          expect(tournaments.first).to have_key("id")
+          expect(tournaments.first).to have_key("name")
+          expect(tournaments.first).to have_key("start_date")
+          expect(tournaments.first).to have_key("end_date")
+          expect(tournaments.first).to have_key("is_major")
+          expect(tournaments.first).to have_key("winner")
+        end
+      end
+
+      context "with invalid year" do
+        it "returns 422 for invalid year" do
+          get "/api/standings/season/2030", headers: headers
+          expect(response).to have_http_status(:unprocessable_entity)
+
+          json_response = JSON.parse(response.body)
+          expect(json_response["success"]).to be false
+          expect(json_response["error"]).to include("No data for season")
+        end
+      end
+    end
+
+    context "without authentication" do
+      it "returns 401 unauthorized" do
+        get "/api/standings/season/2025"
+        expect(response).to have_http_status(:unauthorized)
+      end
+    end
+  end
 end
