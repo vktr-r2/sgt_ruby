@@ -32,4 +32,13 @@ Rails.application.routes.draw do
     delete "/table/:table/:id", to: "admin#delete_record", as: :delete_record
   end
 
+  namespace :api do
+    get "tournaments/current/scores", to: "tournaments#current_scores"
+    get "tournaments/history", to: "tournaments#history"
+    get "tournaments/:id/results", to: "tournaments#show_results"
+    get "standings/seasons", to: "standings#seasons"
+    get "standings/season/:year", to: "standings#season_detail"
+    get "standings/season", to: "standings#season"
+  end
+
 end
