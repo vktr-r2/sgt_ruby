@@ -26,9 +26,10 @@ class Admin::AdminController < ApplicationController
     end
 
     render json: {
-      data: records,
+      data: format_records_for_display(records, table_name),
       columns: get_table_columns(model),
-      table_name: table_name
+      table_name: table_name,
+      lookups: get_lookups_for_table(table_name)
     }
   end
 
@@ -93,7 +94,7 @@ class Admin::AdminController < ApplicationController
     when "match_results"
       [ :user, :tournament ]
     when "scores"
-      [ :match_pick ]
+      [ match_pick: [ :golfer, :user ] ]
     else
       []
     end
@@ -107,6 +108,30 @@ class Admin::AdminController < ApplicationController
         null: model.column_for_attribute(column).null
       }
     end
+  end
+
+  def get_lookups_for_table(table_name)
+    lookups = {}
+
+    case table_name
+    when "match_picks"
+      lookups[:users] = User.all.map { |u| { id: u.id, name: u.name } }
+      lookups[:golfers] = Golfer.all.map { |g| { id: g.id, name: "#{g.f_name} #{g.l_name}" } }
+      lookups[:tournaments] = Tournament.all.map { |t| { id: t.id, name: t.name } }
+    when "match_results"
+      lookups[:users] = User.all.map { |u| { id: u.id, name: u.name } }
+      lookups[:tournaments] = Tournament.all.map { |t| { id: t.id, name: t.name } }
+    when "scores"
+      lookups[:match_picks] = MatchPick.includes(:user, :golfer).map do |mp|
+        { id: mp.id, name: "#{mp.user&.name} - #{mp.golfer&.f_name} #{mp.golfer&.l_name}" }
+      end
+    end
+
+    lookups
+  end
+
+  def format_records_for_display(records, _table_name)
+    records.map(&:attributes)
   end
 
   def record_params(model)
