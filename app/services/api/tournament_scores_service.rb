@@ -25,6 +25,7 @@ module Api
       {
         id: tournament.id,
         name: tournament.name,
+        golf_course: tournament.golf_course,
         start_date: tournament.start_date.to_s,
         end_date: tournament.end_date.to_s,
         is_major: tournament.major_championship
