@@ -7,6 +7,11 @@ module Api
       render_success(result)
     end
 
+    def full_leaderboard
+      result = Api::FullLeaderboardService.call
+      render_success(result)
+    end
+
     def history
       page = [ params[:page]&.to_i || 1, 1 ].max
       per_page = [ [ params[:per_page]&.to_i || 10, 50 ].min, 1 ].max
