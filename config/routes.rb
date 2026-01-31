@@ -1,10 +1,10 @@
 require "sidekiq/web"
-require 'sidekiq-scheduler/web'
+require "sidekiq-scheduler/web"
 
 Rails.application.routes.draw do
   devise_for :users, controllers: {
-    sessions: 'users/sessions',
-    registrations: 'users/registrations'
+    sessions: "users/sessions",
+    registrations: "users/registrations"
   }
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
@@ -12,7 +12,7 @@ Rails.application.routes.draw do
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
 
-  
+
   # Sidekiq paths - only mount if Redis is available
   mount Sidekiq::Web => "/sidekiq" if ENV["REDIS_URL"].present?
 
@@ -33,6 +33,7 @@ Rails.application.routes.draw do
   end
 
   namespace :api do
+    get "tournaments/current/full_leaderboard", to: "tournaments#full_leaderboard"
     get "tournaments/current/scores", to: "tournaments#current_scores"
     get "tournaments/history", to: "tournaments#history"
     get "tournaments/:id/results", to: "tournaments#show_results"
@@ -40,5 +41,4 @@ Rails.application.routes.draw do
     get "standings/season/:year", to: "standings#season_detail"
     get "standings/season", to: "standings#season"
   end
-
 end
