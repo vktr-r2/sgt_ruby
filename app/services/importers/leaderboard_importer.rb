@@ -137,9 +137,11 @@ module Importers
         save_score(score)
       end
 
-      # Copy scores for missed rounds (day 1 to day 3, day 2 to day 4)
-      copy_score_if_missing(match_pick, from_round: 1, to_round: 3)
-      copy_score_if_missing(match_pick, from_round: 2, to_round: 4)
+      # Copy scores for missed rounds based on current tournament round
+      # Day 3: Copy round 1 → round 3
+      # Day 4: Copy round 2 → round 4
+      copy_score_if_missing(match_pick, from_round: 1, to_round: 3) if @current_round >= 3
+      copy_score_if_missing(match_pick, from_round: 2, to_round: 4) if @current_round >= 4
     end
 
     def copy_score_if_missing(match_pick, from_round:, to_round:)
