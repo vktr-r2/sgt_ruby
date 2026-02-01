@@ -41,37 +41,78 @@ module Importers
       if player_status == "cut"
         handle_cut_player(match_pick, player_data, player_status, player_position)
       else
-        save_round_scores(match_pick, player_data["rounds"], player_status, player_position)
+        save_round_scores(match_pick, player_data, player_status, player_position)
       end
     end
 
-    def save_round_scores(match_pick, rounds, player_status, player_position)
-      return unless rounds
+    def save_round_scores(match_pick, player_data, player_status, player_position)
+      rounds = player_data["rounds"] || []
+      current_round_num = extract_int_from_api(player_data["currentRound"])
+      round_complete = player_data["roundComplete"]
 
+      # Save completed rounds from rounds array
       rounds.each do |round_data|
-        # Extract round number from RapidAPI's MongoDB format
         round_number = extract_int_from_api(round_data["roundId"])
         strokes = extract_int_from_api(round_data["strokes"])
 
         next unless round_number && strokes
         next unless round_number.between?(1, 4)
 
-        # Find existing score or create new one (first API call creates, second updates)
-        score = Score.find_or_initialize_by(
-          match_pick: match_pick,
-          round: round_number
-        )
+        save_single_round(match_pick, round_number, strokes, player_status, player_position)
+      end
 
-        # If this is a replacement and score already exists from original golfer, preserve it
-        if match_pick.original_golfer_id.present? && !score.new_record?
-          Rails.logger.info "Preserving original golfer's score for round #{round_number} (match_pick_id: #{match_pick.id})"
-          next
-        end
+      # Check if current round is in progress (not in rounds array yet)
+      return unless current_round_num && current_round_num.between?(1, 4)
+      return if round_complete # Round is complete, should be in rounds array
 
-        score.score = strokes
-        score.status = player_status
-        score.position = player_position
-        save_score(score)
+      # Check if current round already exists in rounds array
+      current_round_in_array = rounds.any? do |r|
+        extract_int_from_api(r["roundId"]) == current_round_num
+      end
+      return if current_round_in_array
+
+      # Save in-progress round using currentRoundScore
+      in_progress_strokes = convert_score_to_par_to_strokes(player_data["currentRoundScore"])
+      return unless in_progress_strokes
+
+      save_single_round(match_pick, current_round_num, in_progress_strokes, player_status, player_position)
+      Rails.logger.info "Saved in-progress round #{current_round_num} score: #{in_progress_strokes} strokes (match_pick_id: #{match_pick.id})"
+    end
+
+    def save_single_round(match_pick, round_number, strokes, player_status, player_position)
+      score = Score.find_or_initialize_by(
+        match_pick: match_pick,
+        round: round_number
+      )
+
+      # If this is a replacement and score already exists from original golfer, preserve it
+      if match_pick.original_golfer_id.present? && !score.new_record?
+        Rails.logger.info "Preserving original golfer's score for round #{round_number} (match_pick_id: #{match_pick.id})"
+        return
+      end
+
+      score.score = strokes
+      score.status = player_status
+      score.position = player_position
+      save_score(score)
+    end
+
+    # Convert score-to-par string ("-3", "+2", "E") to strokes
+    # Assumes par 72 per round
+    def convert_score_to_par_to_strokes(score_to_par)
+      return nil unless score_to_par
+
+      par = @tournament.par || 72
+
+      if score_to_par == "E"
+        par
+      elsif score_to_par.start_with?("+")
+        par + score_to_par[1..].to_i
+      elsif score_to_par.start_with?("-")
+        par - score_to_par[1..].to_i
+      else
+        # Handle plain number (could be positive or negative)
+        par + score_to_par.to_i
       end
     end
 
@@ -96,9 +137,11 @@ module Importers
         save_score(score)
       end
 
-      # Copy scores for missed rounds (day 1 to day 3, day 2 to day 4)
-      copy_score_if_missing(match_pick, from_round: 1, to_round: 3)
-      copy_score_if_missing(match_pick, from_round: 2, to_round: 4)
+      # Copy scores for missed rounds based on current tournament round
+      # Day 3: Copy round 1 → round 3
+      # Day 4: Copy round 2 → round 4
+      copy_score_if_missing(match_pick, from_round: 1, to_round: 3) if @current_round >= 3
+      copy_score_if_missing(match_pick, from_round: 2, to_round: 4) if @current_round >= 4
     end
 
     def copy_score_if_missing(match_pick, from_round:, to_round:)
