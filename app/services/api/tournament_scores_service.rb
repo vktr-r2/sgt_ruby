@@ -28,8 +28,15 @@ module Api
         golf_course: tournament.golf_course,
         start_date: tournament.start_date.to_s,
         end_date: tournament.end_date.to_s,
-        is_major: tournament.major_championship
+        is_major: tournament.major_championship,
+        current_round: current_round(tournament)
       }
+    end
+
+    def current_round(tournament)
+      # Get current round from LeaderboardSnapshot if available
+      snapshot = LeaderboardSnapshot.find_by(tournament_id: tournament.id)
+      snapshot&.current_round
     end
 
     def build_leaderboard(tournament)
@@ -73,7 +80,8 @@ module Api
       {
         round: score.round,
         score: score.score,
-        position: score.position
+        position: score.position,
+        thru: score.thru
       }
     end
 
