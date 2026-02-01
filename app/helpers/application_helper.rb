@@ -5,9 +5,8 @@ module ApplicationHelper
       timestamp_ms = hash.dig("$date", "$numberLong").to_i
       timestamp_seconds = timestamp_ms / 1000
 
-      # Convert to Time object
-      datetime = Time.at(timestamp_seconds)
-      datetime
+      # Convert to Time object in UTC (API timestamps represent midnight UTC)
+      Time.at(timestamp_seconds).utc
     end
 
     def self.extract_year_from_date_hash(hash)

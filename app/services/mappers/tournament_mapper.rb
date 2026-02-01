@@ -6,11 +6,13 @@ module Mappers
     end
 
     def map_to_attributes
+      year = ApplicationHelper::DateOperations.extract_year_from_date_hash(@tourn_data["date"]["start"])
+      tourn_id = @tourn_data["tournId"]
       {
-        "unique_id" => @tourn_data["_id"]["$oid"],
-        "tournament_id" => @tourn_data["tournId"],
-        "year" => ApplicationHelper::DateOperations.extract_year_from_date_hash(@tourn_data["date"]["start"]),
-        "source_id" => @tourn_data.dig("_id", "$oid"),
+        "unique_id" => "#{tourn_id}-#{year}",
+        "tournament_id" => tourn_id,
+        "year" => year,
+        "source_id" => "#{tourn_id}-#{year}",
         "golf_course" => @tourn_data["courses"][0]["courseName"],
         "location" => @tourn_data["courses"][0]["location"].to_json,
         "time_zone" => @tourn_data["timeZone"],

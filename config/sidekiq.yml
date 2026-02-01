@@ -11,11 +11,11 @@
 :scheduler:
   :schedule:
     schedule_import_job:
-      cron: "0 0 3 1 *" # Runs every year on Jan 3rd
+      cron: "0 22 26 1 *" # Runs Jan 26 at 10:00 PM EST
       class: "ScheduleImportJob"
 
     tournament_import_job:
-      cron: "0 0 * * 2" # Runs every week at Tuesday 00:00:00 EST
+      cron: "0 0 * * 2" # Runs every Tuesday at 00:00:00 EST
       class: "TournamentImportJob"
 
     validate_picks_job:

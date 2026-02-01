@@ -2,9 +2,6 @@ class TestUserSeed
   def self.seed
     puts "Seeding test users..."
 
-    # Clear existing users
-    User.destroy_all
-
     # Create 4 test users for the golf group
     users = [
       {

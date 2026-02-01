@@ -13,13 +13,13 @@ class Tournament < ApplicationRecord
   has_many :match_results, dependent: :destroy
 
   def draft_window_start
-    # Two days before tournament starts at 00:00:00
-    (start_date - 2.days).beginning_of_day
+    # Two days before tournament starts at 00:00:00 EST
+    (start_date.utc.to_date - 2.days).beginning_of_day
   end
 
   def draft_window_end
-    # One day before tournament starts at 23:59:59
-    (start_date - 1.day).end_of_day
+    # One day before tournament starts at 23:59:59 EST
+    (start_date.utc.to_date - 1.day).end_of_day
   end
 
   def draft_window_open?(current_time = Time.zone.now)

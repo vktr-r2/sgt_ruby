@@ -10,8 +10,8 @@ module Importers
       mapped_tournament = Mappers::TournamentMapper.new(@tourn_data).map_to_attributes
       save_tournament(mapped_tournament)
 
-      # Extract tournament_unique_id
-      tournament_unique_id = @tourn_data["_id"]["$oid"]
+      # Extract tournament_unique_id (tournId-year format)
+      tournament_unique_id = mapped_tournament["unique_id"]
 
       # Loop through golfers array, map and save golfer
       @tourn_data["players"].each do |golfer|

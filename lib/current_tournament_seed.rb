@@ -2,11 +2,6 @@ class CurrentTournamentSeed
   def self.seed
     puts "Seeding current tournaments..."
 
-    # Clear existing data
-    Tournament.destroy_all
-    Golfer.destroy_all
-    MatchPick.destroy_all
-
     # Create current and upcoming tournaments for testing
     tournaments = [
       {
