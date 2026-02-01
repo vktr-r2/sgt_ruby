@@ -31,20 +31,20 @@ RSpec.describe Api::FullLeaderboardService do
       let(:leaderboard_data) do
         [
           { "player_id" => "123", "name" => "Tiger Woods", "position" => "1", "status" => "active",
-            "total_strokes" => 140, "total_to_par" => -4, "rounds" => [{ "round" => 1, "score" => 70 }] },
+            "total_strokes" => 140, "total_to_par" => -4, "rounds" => [ { "round" => 1, "score" => 70 } ] },
           { "player_id" => "456", "name" => "Rory McIlroy", "position" => "T2", "status" => "active",
-            "total_strokes" => 142, "total_to_par" => -2, "rounds" => [{ "round" => 1, "score" => 72 }] }
+            "total_strokes" => 142, "total_to_par" => -2, "rounds" => [ { "round" => 1, "score" => 72 } ] }
         ]
       end
 
       let!(:snapshot) do
         create(:leaderboard_snapshot,
-          tournament: tournament,
-          leaderboard_data: leaderboard_data,
-          current_round: 2,
-          cut_line_score: "-3",
-          cut_line_count: 73,
-          fetched_at: Time.zone.parse("2026-01-31 12:00:00")
+               tournament: tournament,
+               leaderboard_data: leaderboard_data,
+               current_round: 2,
+               cut_line_score: "-3",
+               cut_line_count: 73,
+               fetched_at: Time.zone.parse("2026-01-31 12:00:00")
         )
       end
 
@@ -88,14 +88,14 @@ RSpec.describe Api::FullLeaderboardService do
         expect(result[:players][1][:name]).to eq("Rory McIlroy")
       end
 
-      it "marks drafted players" do
+      it "includes drafter name for drafted players" do
         result = described_class.call
 
         tiger = result[:players].find { |p| p[:player_id] == "123" }
         rory = result[:players].find { |p| p[:player_id] == "456" }
 
-        expect(tiger[:is_drafted]).to be true
-        expect(rory[:is_drafted]).to be false
+        expect(tiger[:drafted_by]).to be_present
+        expect(rory[:drafted_by]).to be_nil
       end
 
       it "includes player details" do
@@ -138,9 +138,9 @@ RSpec.describe Api::FullLeaderboardService do
 
       let!(:snapshot) do
         create(:leaderboard_snapshot,
-          tournament: tournament,
-          leaderboard_data: leaderboard_data,
-          current_round: 2
+               tournament: tournament,
+               leaderboard_data: leaderboard_data,
+               current_round: 2
         )
       end
 
@@ -152,7 +152,7 @@ RSpec.describe Api::FullLeaderboardService do
         result = described_class.call
 
         positions = result[:players].map { |p| p[:position] }
-        expect(positions).to eq(["1", "3", "T5", "CUT", "WD"])
+        expect(positions).to eq([ "1", "3", "T5", "CUT", "WD" ])
       end
     end
   end
