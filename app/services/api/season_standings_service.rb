@@ -42,6 +42,7 @@ module Api
         second_place: results.where(place: 2).count,
         third_place: results.where(place: 3).count,
         fourth_place: results.where(place: 4).count,
+        majors_won: results.joins(:tournament).where(place: 1, tournaments: { major_championship: true }).count,
         winners_picked: results.where(winner_picked: true).count,
         total_cuts_missed: results.sum(:cuts_missed)
       }

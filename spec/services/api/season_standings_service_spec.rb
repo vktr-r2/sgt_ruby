@@ -39,9 +39,11 @@ RSpec.describe Api::SeasonStandingsService do
           expect(standing).to have_key(:user_id)
           expect(standing).to have_key(:username)
           expect(standing).to have_key(:total_points)
-          expect(standing).to have_key(:tournaments_played)
-          expect(standing).to have_key(:wins)
-          expect(standing).to have_key(:top_3_finishes)
+          expect(standing).to have_key(:first_place)
+          expect(standing).to have_key(:second_place)
+          expect(standing).to have_key(:third_place)
+          expect(standing).to have_key(:fourth_place)
+          expect(standing).to have_key(:majors_won)
           expect(standing).to have_key(:winners_picked)
           expect(standing).to have_key(:total_cuts_missed)
         end
@@ -58,13 +60,32 @@ RSpec.describe Api::SeasonStandingsService do
         expect(standings.last[:rank]).to eq(3)
       end
 
-      it "calculates cumulative statistics correctly" do
+      it "calculates placement counts correctly" do
         result = described_class.call
 
-        first_standing = result[:standings].first
+        # Each user should have placement data from the 3 tournaments
+        result[:standings].each do |standing|
+          total_placements = standing[:first_place] + standing[:second_place] +
+                            standing[:third_place] + standing[:fourth_place]
+          expect(total_placements).to eq(3) # 3 tournaments
+        end
+      end
 
-        expect(first_standing[:tournaments_played]).to be > 0
-        expect(first_standing[:total_points]).to be <= 0  # Points are negative
+      it "calculates majors_won correctly" do
+        # Create a major tournament with a winner
+        major = create(:tournament, year: 2026, major_championship: true)
+        create(:match_result, user: users.first, tournament: major, place: 1, total_score: -6)
+
+        result = described_class.call
+
+        first_user_standing = result[:standings].find { |s| s[:user_id] == users.first.id }
+        expect(first_user_standing[:majors_won]).to eq(1)
+
+        # Other users should have 0 majors won
+        other_standings = result[:standings].reject { |s| s[:user_id] == users.first.id }
+        other_standings.each do |standing|
+          expect(standing[:majors_won]).to eq(0)
+        end
       end
 
       it "filters by year parameter" do
@@ -80,9 +101,11 @@ RSpec.describe Api::SeasonStandingsService do
 
         expect(result[:season_year]).to eq(2026)
 
-        # Check that old tournament results aren't included
+        # Check that old tournament results aren't included by verifying placement counts
         first_standing = result[:standings].find { |s| s[:user_id] == users.first.id }
-        expect(first_standing[:tournaments_played]).to eq(3)  # Only 2026 tournaments
+        total_placements = first_standing[:first_place] + first_standing[:second_place] +
+                          first_standing[:third_place] + first_standing[:fourth_place]
+        expect(total_placements).to eq(3) # Only 2026 tournaments
       end
     end
 
