@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_31_122038) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_01_172347) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -74,6 +74,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_31_122038) do
     t.datetime "updated_at", null: false
     t.string "position"
     t.string "status", default: "active"
+    t.string "thru"
     t.index ["match_pick_id"], name: "index_scores_on_match_pick_id"
     t.index ["status"], name: "index_scores_on_status"
   end
