@@ -51,7 +51,7 @@ module Importers
       round_complete = player_data["roundComplete"]
       player_thru = player_data["thru"]
 
-      # Save completed rounds from rounds array (thru = "18" for completed rounds)
+      # Save completed rounds from rounds array (thru = "F" for finished rounds)
       rounds.each do |round_data|
         round_number = extract_int_from_api(round_data["roundId"])
         strokes = extract_int_from_api(round_data["strokes"])
@@ -59,7 +59,7 @@ module Importers
         next unless round_number && strokes
         next unless round_number.between?(1, 4)
 
-        save_single_round(match_pick, round_number, strokes, player_status, player_position, "18")
+        save_single_round(match_pick, round_number, strokes, player_status, player_position, "F")
       end
 
       # Check if current round is in progress (not in rounds array yet)
@@ -121,7 +121,7 @@ module Importers
     def handle_cut_player(match_pick, player_data, player_status, player_position)
       rounds = player_data["rounds"] || []
 
-      # Save actual scores for rounds played (cut players have completed their rounds, thru = "18")
+      # Save actual scores for rounds played (cut players have completed their rounds, thru = "F")
       rounds.each do |round_data|
         round_number = extract_int_from_api(round_data["roundId"])
         strokes = extract_int_from_api(round_data["strokes"])
@@ -136,7 +136,7 @@ module Importers
         score.score = strokes
         score.status = player_status
         score.position = player_position
-        score.thru = "18"
+        score.thru = "F"
         save_score(score)
       end
 
@@ -156,14 +156,14 @@ module Importers
       source_score = Score.find_by(match_pick: match_pick, round: from_round)
       return unless source_score
 
-      # Create new score for target round (copy score, position, status, and thru)
+      # Create new score for target round (copy score, position, status; no thru for copied rounds)
       Score.create!(
         match_pick: match_pick,
         round: to_round,
         score: source_score.score,
         position: source_score.position,
         status: source_score.status,
-        thru: source_score.thru
+        thru: nil
       )
 
       Rails.logger.info "Copied round #{from_round} score to round #{to_round} for cut player (match_pick_id: #{match_pick.id})"
