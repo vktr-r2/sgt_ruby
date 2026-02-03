@@ -11,14 +11,14 @@ module Api
       snapshot = LeaderboardSnapshot.find_by(tournament_id: tournament.id)
       return null_response unless snapshot&.leaderboard_data.present?
 
-      drafted_golfer_ids = get_drafted_golfer_ids(tournament)
+      drafted_golfer_info = get_drafted_golfer_info(tournament)
 
       {
         tournament: tournament_data(tournament),
         current_round: snapshot.current_round,
         cut_line: build_cut_line(snapshot),
         fetched_at: snapshot.fetched_at&.iso8601,
-        players: build_players_list(snapshot.leaderboard_data, drafted_golfer_ids)
+        players: build_players_list(snapshot.leaderboard_data, drafted_golfer_info)
       }
     end
 
@@ -36,11 +36,11 @@ module Api
       }
     end
 
-    def get_drafted_golfer_ids(tournament)
+    def get_drafted_golfer_info(tournament)
       MatchPick.where(tournament: tournament, drafted: true)
-               .joins(:golfer)
-               .pluck("golfers.source_id")
-               .to_set
+               .joins(:golfer, :user)
+               .pluck("golfers.source_id", "users.name")
+               .to_h
     end
 
     def build_cut_line(snapshot)
@@ -52,16 +52,16 @@ module Api
       }
     end
 
-    def build_players_list(leaderboard_data, drafted_ids)
+    def build_players_list(leaderboard_data, drafted_info)
       players = leaderboard_data.map do |player|
-        player_with_drafted_flag(player, drafted_ids)
+        player_with_drafter_info(player, drafted_info)
       end
 
       # Sort by position
       players.sort_by { |p| parse_position_for_sort(p[:position]) }
     end
 
-    def player_with_drafted_flag(player, drafted_ids)
+    def player_with_drafter_info(player, drafted_info)
       {
         player_id: player["player_id"],
         name: player["name"],
@@ -71,7 +71,7 @@ module Api
         total_to_par: player["total_to_par"],
         thru: player["thru"],
         rounds: player["rounds"]&.map { |r| { round: r["round"], score: r["score"], in_progress: r["in_progress"] } } || [],
-        is_drafted: drafted_ids.include?(player["player_id"])
+        drafted_by: drafted_info[player["player_id"]]
       }
     end
 

@@ -49,8 +49,9 @@ module Importers
       rounds = player_data["rounds"] || []
       current_round_num = extract_int_from_api(player_data["currentRound"])
       round_complete = player_data["roundComplete"]
+      player_thru = player_data["thru"]
 
-      # Save completed rounds from rounds array
+      # Save completed rounds from rounds array (thru = "F" for finished rounds)
       rounds.each do |round_data|
         round_number = extract_int_from_api(round_data["roundId"])
         strokes = extract_int_from_api(round_data["strokes"])
@@ -58,7 +59,7 @@ module Importers
         next unless round_number && strokes
         next unless round_number.between?(1, 4)
 
-        save_single_round(match_pick, round_number, strokes, player_status, player_position)
+        save_single_round(match_pick, round_number, strokes, player_status, player_position, "F")
       end
 
       # Check if current round is in progress (not in rounds array yet)
@@ -71,15 +72,15 @@ module Importers
       end
       return if current_round_in_array
 
-      # Save in-progress round using currentRoundScore
+      # Save in-progress round using currentRoundScore with player's thru value
       in_progress_strokes = convert_score_to_par_to_strokes(player_data["currentRoundScore"])
       return unless in_progress_strokes
 
-      save_single_round(match_pick, current_round_num, in_progress_strokes, player_status, player_position)
-      Rails.logger.info "Saved in-progress round #{current_round_num} score: #{in_progress_strokes} strokes (match_pick_id: #{match_pick.id})"
+      save_single_round(match_pick, current_round_num, in_progress_strokes, player_status, player_position, player_thru)
+      Rails.logger.info "Saved in-progress round #{current_round_num} score: #{in_progress_strokes} strokes, thru: #{player_thru} (match_pick_id: #{match_pick.id})"
     end
 
-    def save_single_round(match_pick, round_number, strokes, player_status, player_position)
+    def save_single_round(match_pick, round_number, strokes, player_status, player_position, thru = nil)
       score = Score.find_or_initialize_by(
         match_pick: match_pick,
         round: round_number
@@ -94,6 +95,7 @@ module Importers
       score.score = strokes
       score.status = player_status
       score.position = player_position
+      score.thru = thru
       save_score(score)
     end
 
@@ -119,7 +121,7 @@ module Importers
     def handle_cut_player(match_pick, player_data, player_status, player_position)
       rounds = player_data["rounds"] || []
 
-      # Save actual scores for rounds played
+      # Save actual scores for rounds played (cut players have completed their rounds, thru = "F")
       rounds.each do |round_data|
         round_number = extract_int_from_api(round_data["roundId"])
         strokes = extract_int_from_api(round_data["strokes"])
@@ -134,6 +136,7 @@ module Importers
         score.score = strokes
         score.status = player_status
         score.position = player_position
+        score.thru = "F"
         save_score(score)
       end
 
@@ -153,13 +156,14 @@ module Importers
       source_score = Score.find_by(match_pick: match_pick, round: from_round)
       return unless source_score
 
-      # Create new score for target round (copy score, position, and status)
+      # Create new score for target round (copy score, position, status; no thru for copied rounds)
       Score.create!(
         match_pick: match_pick,
         round: to_round,
         score: source_score.score,
         position: source_score.position,
-        status: source_score.status
+        status: source_score.status,
+        thru: nil
       )
 
       Rails.logger.info "Copied round #{from_round} score to round #{to_round} for cut player (match_pick_id: #{match_pick.id})"
