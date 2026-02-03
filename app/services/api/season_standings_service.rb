@@ -38,9 +38,10 @@ module Api
         user_id: user.id,
         username: user.name,
         total_points: results.sum(:total_score),
-        tournaments_played: results.count,
-        wins: results.where(place: 1).count,
-        top_3_finishes: results.where("place <= 3").count,
+        first_place: results.where(place: 1).count,
+        second_place: results.where(place: 2).count,
+        third_place: results.where(place: 3).count,
+        fourth_place: results.where(place: 4).count,
         winners_picked: results.where(winner_picked: true).count,
         total_cuts_missed: results.sum(:cuts_missed)
       }
