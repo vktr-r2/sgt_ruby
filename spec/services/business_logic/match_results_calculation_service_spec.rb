@@ -25,6 +25,12 @@ RSpec.describe BusinessLogic::MatchResultsCalculationService do
   describe "#calculate" do
     context "basic placement calculation" do
       it "calculates user placements based on total strokes" do
+        # Create leaderboard snapshot with tournament winner (not drafted by anyone)
+        non_drafted_winner = create(:golfer, source_id: "9999", f_name: "Tournament", l_name: "Winner")
+        create(:leaderboard_snapshot, tournament: tournament, leaderboard_data: [
+          { "player_id" => "9999", "position" => "1", "name" => "Tournament Winner" }
+        ])
+
         # User 0: Best total = 1st place = -4 points
         # Each golfer: 70, 71, 72, 73 (different scores to avoid ties)
         match_pick_1 = create(:match_pick, user: users[0], tournament: tournament, golfer: golfer1, drafted: true)
@@ -97,11 +103,11 @@ RSpec.describe BusinessLogic::MatchResultsCalculationService do
 
         expect(results.count).to eq(4)
 
-        # User 0: 1st place = -4 points + winner picked = -1, total = -5
+        # User 0: 1st place = -4 points (no winner picked - tournament winner not drafted)
         expect(results[0].user_id).to eq(users[0].id)
         expect(results[0].place).to eq(1)
-        expect(results[0].total_score).to eq(-5)
-        expect(results[0].winner_picked).to be true
+        expect(results[0].total_score).to eq(-4)
+        expect(results[0].winner_picked).to be false
 
         # User 1: 2nd place = -3 points
         expect(results[1].user_id).to eq(users[1].id)
@@ -125,7 +131,13 @@ RSpec.describe BusinessLogic::MatchResultsCalculationService do
         # Create major championship tournament
         major_tournament = create(:tournament, tournament_id: "480", name: "Masters", major_championship: true)
 
-        # User 0: Winner with major bonus = -4 + -2 = -6
+        # Create leaderboard snapshot with tournament winner (not drafted by anyone)
+        non_drafted_winner = create(:golfer, source_id: "9999", f_name: "Tournament", l_name: "Winner")
+        create(:leaderboard_snapshot, tournament: major_tournament, leaderboard_data: [
+          { "player_id" => "9999", "position" => "1", "name" => "Tournament Winner" }
+        ])
+
+        # User 0: Winner of user standings with major bonus = -4 + -2 = -6
         match_pick_1 = create(:match_pick, user: users[0], tournament: major_tournament, golfer: golfer1, drafted: true)
         (1..4).each { |round| create(:score, match_pick: match_pick_1, round: round, score: 68, status: "complete") }
 
@@ -138,9 +150,9 @@ RSpec.describe BusinessLogic::MatchResultsCalculationService do
 
         results = MatchResult.where(tournament: major_tournament).order(:place)
 
-        # Winner gets -4 (1st place) + -2 (major bonus) + -1 (winner picked) = -7
-        expect(results.first.total_score).to eq(-7)
-        expect(results.first.winner_picked).to be true
+        # Winner gets -4 (1st place) + -2 (major bonus), no winner picked = -6
+        expect(results.first.total_score).to eq(-6)
+        expect(results.first.winner_picked).to be false
 
         # Second place gets only -3 (no major bonus)
         expect(results.second.total_score).to eq(-3)
@@ -148,11 +160,16 @@ RSpec.describe BusinessLogic::MatchResultsCalculationService do
     end
 
     context "winner picked bonus" do
-      it "adds -1 bonus if user drafted tournament winner" do
-        # Create a winner golfer (lowest score across ALL users)
+      it "adds -1 bonus if user drafted actual tournament winner from leaderboard" do
+        # Create the actual tournament winner golfer (position 1 in leaderboard)
         winner_golfer = create(:golfer, source_id: "9999", f_name: "Tournament", l_name: "Winner")
 
-        # User 0: Drafted winner, finishes 2nd place in user standings
+        # Create leaderboard snapshot with this golfer as tournament winner
+        create(:leaderboard_snapshot, tournament: tournament, leaderboard_data: [
+          { "player_id" => "9999", "position" => "1", "name" => "Tournament Winner" }
+        ])
+
+        # User 0: Drafted the actual tournament winner, finishes 2nd place in user standings
         match_pick_1 = create(:match_pick, user: users[0], tournament: tournament, golfer: winner_golfer, drafted: true)
         match_pick_2 = create(:match_pick, user: users[0], tournament: tournament, golfer: golfer2, drafted: true)
 
@@ -162,7 +179,7 @@ RSpec.describe BusinessLogic::MatchResultsCalculationService do
         (1..4).each { |round| create(:score, match_pick: match_pick_2, round: round, score: 72, status: "complete") }
         # User 0 total: 260 + 288 = 548 strokes
 
-        # User 1: Did NOT draft winner, finishes 1st place in user standings (lower total)
+        # User 1: Did NOT draft the tournament winner, finishes 1st place in user standings (lower total)
         match_pick_3 = create(:match_pick, user: users[1], tournament: tournament, golfer: golfer3, drafted: true)
         match_pick_4 = create(:match_pick, user: users[1], tournament: tournament, golfer: golfer4, drafted: true)
 
@@ -176,7 +193,7 @@ RSpec.describe BusinessLogic::MatchResultsCalculationService do
 
         results = MatchResult.where(tournament: tournament).index_by(&:user_id)
 
-        # User 1: 1st place = -4 points, no winner picked
+        # User 1: 1st place = -4 points, no winner picked (didn't draft tournament winner)
         expect(results[users[1].id].total_score).to eq(-4)
         expect(results[users[1].id].winner_picked).to be false
 
@@ -188,6 +205,12 @@ RSpec.describe BusinessLogic::MatchResultsCalculationService do
 
     context "cuts missed tracking" do
       it "tracks number of drafted golfers who were cut" do
+        # Create leaderboard snapshot with tournament winner (not drafted by anyone)
+        non_drafted_winner = create(:golfer, source_id: "9999", f_name: "Tournament", l_name: "Winner")
+        create(:leaderboard_snapshot, tournament: tournament, leaderboard_data: [
+          { "player_id" => "9999", "position" => "1", "name" => "Tournament Winner" }
+        ])
+
         # User 0: Has 2 golfers cut, 2 golfers complete
         match_pick_1 = create(:match_pick, user: users[0], tournament: tournament, golfer: golfer1, drafted: true)
         match_pick_2 = create(:match_pick, user: users[0], tournament: tournament, golfer: golfer2, drafted: true)

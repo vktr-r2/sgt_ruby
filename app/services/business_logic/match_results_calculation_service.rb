@@ -87,22 +87,20 @@ module BusinessLogic
     end
 
     def find_tournament_winner
-      # Find golfer with lowest total score across all drafted picks
-      golfer_totals = {}
+      # Find actual tournament winner from leaderboard snapshot (position = "1")
+      snapshot = LeaderboardSnapshot.find_by(tournament: @tournament)
+      return nil unless snapshot&.leaderboard_data
 
-      MatchPick.where(tournament: @tournament, drafted: true).includes(:scores).each do |match_pick|
-        golfer_id = match_pick.golfer_id
-        total_strokes = match_pick.scores.sum(:score)
+      # Find player with position "1" (tournament winner)
+      winner_data = snapshot.leaderboard_data.find { |p| p["position"] == "1" }
+      return nil unless winner_data
 
-        if golfer_totals[golfer_id].nil? || total_strokes < golfer_totals[golfer_id]
-          golfer_totals[golfer_id] = total_strokes
-        end
-      end
+      winner_source_id = winner_data["player_id"]
+      return nil unless winner_source_id
 
-      return nil if golfer_totals.empty?
-
-      # Return golfer_id with lowest total
-      golfer_totals.min_by { |_golfer_id, total| total }&.first
+      # Find golfer in our database by source_id
+      winner_golfer = Golfer.find_by(source_id: winner_source_id)
+      winner_golfer&.id
     end
 
     def user_drafted_golfer?(user, golfer_id)
