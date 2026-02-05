@@ -25,11 +25,25 @@ class Admin::AdminController < ApplicationController
       records = records.includes(associations_for_table(table_name))
     end
 
+    # Apply filters for match_picks
+    if table_name == "match_picks"
+      records = records.where(tournament_id: params[:tournament_id]) if params[:tournament_id].present?
+      records = records.where(user_id: params[:user_id]) if params[:user_id].present?
+      records = records.where(golfer_id: params[:golfer_id]) if params[:golfer_id].present?
+    end
+
+    # Apply sorting
+    if params[:sort_by].present? && model.column_names.include?(params[:sort_by])
+      direction = params[:sort_direction] == "desc" ? :desc : :asc
+      records = records.order(params[:sort_by] => direction)
+    end
+
     render json: {
       data: format_records_for_display(records, table_name),
       columns: get_table_columns(model),
       table_name: table_name,
-      lookups: get_lookups_for_table(table_name)
+      lookups: get_lookups_for_table(table_name),
+      total_count: records.size
     }
   end
 
