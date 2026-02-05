@@ -66,8 +66,9 @@ class LeaderboardImportJob < ApplicationJob
       }
     end
 
-    # Add in-progress round if applicable
-    if current_round_num && current_round_num.between?(1, 4) && !round_complete
+    # Add in-progress round if applicable (skip if player hasn't started)
+    player_status = player["status"]
+    if current_round_num && current_round_num.between?(1, 4) && !round_complete && player_status != "not started"
       existing = round_scores.find { |r| r["round"] == current_round_num }
       unless existing
         in_progress_score = convert_score_to_par_to_strokes(player["currentRoundScore"], tournament)
@@ -104,7 +105,7 @@ class LeaderboardImportJob < ApplicationJob
   end
 
   def convert_score_to_par_to_strokes(score_to_par, tournament)
-    return nil unless score_to_par
+    return nil if score_to_par.nil? || score_to_par.to_s.strip.empty?
 
     par = tournament.par || 72
 
