@@ -6,5 +6,5 @@ class MatchPick < ApplicationRecord
   has_many :scores, dependent: :destroy
 
   # Golfer selection limit per season (Scottie Scheffler rule)
-  GOLFER_SELECTION_LIMIT = 3
+  GOLFER_SELECTION_LIMIT = 4
 end
