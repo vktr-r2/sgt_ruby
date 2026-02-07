@@ -22,6 +22,8 @@ module Api
     end
 
     def tournament_data(tournament)
+      snapshot = LeaderboardSnapshot.find_by(tournament_id: tournament.id)
+
       {
         id: tournament.id,
         name: tournament.name,
@@ -29,14 +31,18 @@ module Api
         start_date: tournament.start_date.to_s,
         end_date: tournament.end_date.to_s,
         is_major: tournament.major_championship,
-        current_round: current_round(tournament)
+        current_round: snapshot&.current_round,
+        cut_line: cut_line_data(snapshot)
       }
     end
 
-    def current_round(tournament)
-      # Get current round from LeaderboardSnapshot if available
-      snapshot = LeaderboardSnapshot.find_by(tournament_id: tournament.id)
-      snapshot&.current_round
+    def cut_line_data(snapshot)
+      return nil unless snapshot&.cut_line_score
+
+      {
+        score: snapshot.cut_line_score,
+        count: snapshot.cut_line_count
+      }
     end
 
     def build_leaderboard(tournament)
