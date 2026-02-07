@@ -6,7 +6,27 @@ class Users::SessionsController < ApplicationController
   def create
     user = User.find_by(email: sign_in_params[:email])
 
+    # Check if account is locked
+    if user&.access_locked?
+      render json: { error: "Account locked. Try again in 15 minutes." }, status: :locked
+      return
+    end
+
+    # Unlock account if lock period has passed
+    if user&.locked_at.present? && user.locked_at < 15.minutes.ago
+      user.unlock_access!
+    end
+
     if user&.valid_password?(sign_in_params[:password])
+      # Reset failed attempts and track sign in
+      user.failed_attempts = 0
+      user.last_sign_in_at = user.current_sign_in_at
+      user.last_sign_in_ip = user.current_sign_in_ip
+      user.current_sign_in_at = Time.current
+      user.current_sign_in_ip = request.remote_ip
+      user.sign_in_count += 1
+      user.save!
+
       user.ensure_authentication_token!
       render json: {
         user: {
@@ -18,6 +38,13 @@ class Users::SessionsController < ApplicationController
         token: user.authentication_token
       }
     else
+      # Increment failed attempts (if user exists)
+      if user
+        user.failed_attempts += 1
+        user.locked_at = Time.current if user.failed_attempts >= 5
+        user.save!
+      end
+
       render json: { error: "Invalid credentials" }, status: :unauthorized
     end
   end

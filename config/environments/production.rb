@@ -78,6 +78,15 @@ Rails.application.configure do
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
 
+  # Security headers
+  config.action_dispatch.default_headers = {
+    "X-Frame-Options" => "DENY",
+    "X-Content-Type-Options" => "nosniff",
+    "X-XSS-Protection" => "1; mode=block",
+    "Referrer-Policy" => "strict-origin-when-cross-origin",
+    "Permissions-Policy" => "geolocation=(), microphone=(), camera=()"
+  }
+
   # Only use :id for inspections in production.
   config.active_record.attributes_for_inspect = [ :id ]
 
