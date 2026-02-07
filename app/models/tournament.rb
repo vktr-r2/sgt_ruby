@@ -25,4 +25,12 @@ class Tournament < ApplicationRecord
   def draft_window_open?(current_time = Time.zone.now)
     current_time >= draft_window_start && current_time <= draft_window_end
   end
+
+  def in_progress?(current_date = Date.current)
+    current_date >= start_date.to_date && current_date <= end_date.to_date
+  end
+
+  def self.any_in_progress?(current_date = Date.current)
+    where("DATE(start_date) <= ? AND DATE(end_date) >= ?", current_date, current_date).exists?
+  end
 end

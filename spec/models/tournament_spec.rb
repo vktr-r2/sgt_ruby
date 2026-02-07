@@ -213,6 +213,54 @@ RSpec.describe Tournament, type: :model do
     end
   end
 
+  describe '#in_progress?' do
+    let(:tournament) do
+      create(:tournament,
+             start_date: Date.parse('2024-06-20'),
+             end_date: Date.parse('2024-06-23'))
+    end
+
+    it 'returns false when date is before tournament starts' do
+      expect(tournament.in_progress?(Date.parse('2024-06-19'))).to be false
+    end
+
+    it 'returns true on tournament start date' do
+      expect(tournament.in_progress?(Date.parse('2024-06-20'))).to be true
+    end
+
+    it 'returns true during tournament' do
+      expect(tournament.in_progress?(Date.parse('2024-06-22'))).to be true
+    end
+
+    it 'returns true on tournament end date' do
+      expect(tournament.in_progress?(Date.parse('2024-06-23'))).to be true
+    end
+
+    it 'returns false after tournament ends' do
+      expect(tournament.in_progress?(Date.parse('2024-06-24'))).to be false
+    end
+  end
+
+  describe '.any_in_progress?' do
+    it 'returns false when no tournaments exist' do
+      expect(Tournament.any_in_progress?(Date.parse('2024-06-22'))).to be false
+    end
+
+    it 'returns false when no tournaments are in progress' do
+      create(:tournament,
+             start_date: Date.parse('2024-06-27'),
+             end_date: Date.parse('2024-06-30'))
+      expect(Tournament.any_in_progress?(Date.parse('2024-06-22'))).to be false
+    end
+
+    it 'returns true when a tournament is in progress' do
+      create(:tournament,
+             start_date: Date.parse('2024-06-20'),
+             end_date: Date.parse('2024-06-23'))
+      expect(Tournament.any_in_progress?(Date.parse('2024-06-22'))).to be true
+    end
+  end
+
   describe 'factory' do
     it 'creates a valid tournament with factory' do
       tournament = create(:tournament)
