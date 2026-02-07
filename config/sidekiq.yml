@@ -26,12 +26,30 @@
       cron: "0 0 * * 4" # Runs every week at Thursday 00:00:00 EST
       class: "SnakeDraftJob"
 
-    leaderboard_import_job_noon:
-      cron: "0 12 * * *" # Runs daily at 12:00 PM EST during tournaments
+    # Leaderboard imports run every 3 hours during waking hours
+    # Job has guard to skip if no tournament in progress (saves API calls)
+    leaderboard_import_job_9am:
+      cron: "0 9 * * *" # 9:00 AM EST
       class: "LeaderboardImportJob"
 
-    leaderboard_import_job_evening:
-      cron: "0 20 * * *" # Runs daily at 8:00 PM EST during tournaments
+    leaderboard_import_job_noon:
+      cron: "0 12 * * *" # 12:00 PM EST
+      class: "LeaderboardImportJob"
+
+    leaderboard_import_job_3pm:
+      cron: "0 15 * * *" # 3:00 PM EST
+      class: "LeaderboardImportJob"
+
+    leaderboard_import_job_6pm:
+      cron: "0 18 * * *" # 6:00 PM EST
+      class: "LeaderboardImportJob"
+
+    leaderboard_import_job_9pm:
+      cron: "0 21 * * *" # 9:00 PM EST
+      class: "LeaderboardImportJob"
+
+    leaderboard_import_job_midnight:
+      cron: "0 0 * * *" # 12:00 AM EST
       class: "LeaderboardImportJob"
 
     match_results_job:
