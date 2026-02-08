@@ -31,9 +31,15 @@ class TestUserSeed
     ]
 
     users.each do |user_data|
-      user = User.create!(user_data)
-      user.ensure_authentication_token!
-      puts "Created user: #{user.name} (#{user.email})"
+      user = User.find_or_initialize_by(email: user_data[:email])
+      if user.new_record?
+        user.assign_attributes(user_data)
+        user.save!
+        user.ensure_authentication_token!
+        puts "Created user: #{user.name} (#{user.email})"
+      else
+        puts "User already exists: #{user.name} (#{user.email})"
+      end
     end
 
     puts "User seeding completed!"
