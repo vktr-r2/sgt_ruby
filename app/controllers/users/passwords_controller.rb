@@ -1,0 +1,47 @@
+# frozen_string_literal: true
+
+class Users::PasswordsController < ApplicationController
+  skip_before_action :authenticate_user!
+
+  # POST /users/password
+  # Request password reset - sends email with reset instructions
+  def create
+    user_params = params[:user] || {}
+    email = user_params[:email]
+
+    if email.blank?
+      return render json: { error: "Email is required" }, status: :unprocessable_entity
+    end
+
+    user = User.find_by(email: email)
+
+    if user
+      user.send_reset_password_instructions
+    end
+
+    # Always return success for security (don't reveal if email exists)
+    render json: { message: "Password reset instructions sent" }
+  end
+
+  # PUT /users/password
+  # Reset password with token
+  def update
+    user = User.reset_password_by_token(reset_password_params)
+
+    if user.errors.empty?
+      render json: { message: "Password reset successfully" }
+    else
+      render json: { error: user.errors.full_messages.join(", ") }, status: :unprocessable_entity
+    end
+  end
+
+  private
+
+  def password_params
+    params.require(:user).permit(:email)
+  end
+
+  def reset_password_params
+    params.require(:user).permit(:reset_password_token, :password, :password_confirmation)
+  end
+end
