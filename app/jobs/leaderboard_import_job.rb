@@ -2,6 +2,12 @@ class LeaderboardImportJob < ApplicationJob
   queue_as :default
 
   def perform
+    # Only fetch leaderboard data during active tournament days (Thu-Sun typically)
+    unless Tournament.any_in_progress?
+      Rails.logger.info "LeaderboardImportJob skipped: No tournament in progress"
+      return nil
+    end
+
     setup
     tournament = @tournament_service.current_tournament
     return nil if tournament.blank?

@@ -44,6 +44,9 @@ gem "thruster", require: false
 # CORS for React frontend
 gem "rack-cors"
 
+# Rate limiting and throttling
+gem "rack-attack"
+
 # Devise for authentication
 gem "devise"
 

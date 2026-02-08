@@ -7,6 +7,9 @@ RSpec.describe LeaderboardImportJob, type: :job do
   let(:leaderboard_importer) { instance_double(Importers::LeaderboardImporter, process: true) }
 
   before do
+    # Default: assume a tournament is in progress
+    allow(Tournament).to receive(:any_in_progress?).and_return(true)
+
     tournament_service_double = instance_double(BusinessLogic::TournamentService)
     allow(BusinessLogic::TournamentService).to receive(:new).and_return(tournament_service_double)
     allow(tournament_service_double).to receive(:current_tournament).and_return(tournament)
@@ -23,6 +26,20 @@ RSpec.describe LeaderboardImportJob, type: :job do
     expect(leaderboard_client).to have_received(:fetch).with(tournament.tournament_id)
     expect(Importers::LeaderboardImporter).to have_received(:new).with(api_data, tournament)
     expect(leaderboard_importer).to have_received(:process)
+  end
+
+  context "when no tournament is in progress" do
+    before do
+      allow(Tournament).to receive(:any_in_progress?).and_return(false)
+    end
+
+    it "skips API fetch to save API calls" do
+      described_class.perform_now
+
+      expect(BusinessLogic::TournamentService).not_to have_received(:new)
+      expect(leaderboard_client).not_to have_received(:fetch)
+      expect(Importers::LeaderboardImporter).not_to have_received(:new)
+    end
   end
 
   context "when tournament is blank" do
@@ -52,6 +69,10 @@ RSpec.describe LeaderboardImportJob, type: :job do
   end
 
   describe "leaderboard snapshot saving" do
+    before do
+      allow(Tournament).to receive(:any_in_progress?).and_return(true)
+    end
+
     let(:api_data) do
       {
         "leaderboardRows" => [
