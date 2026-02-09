@@ -33,7 +33,7 @@ module RapidApi
 
     def default_headers
       {
-        "X-RapidAPI-Key": Rails.application.credentials.dig(:rapid_api, :api_key),
+        "X-RapidAPI-Key": ENV["RAPIDAPI_KEY"] || Rails.application.credentials.dig(:rapid_api, :api_key),
         "X-RapidAPI-Host": "live-golf-data.p.rapidapi.com"
       }
     end
