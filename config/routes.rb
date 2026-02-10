@@ -31,6 +31,7 @@ Rails.application.routes.draw do
     post "/table/:table", to: "admin#create_record", as: :create_record
     put "/table/:table/:id", to: "admin#update_record", as: :update_record
     delete "/table/:table/:id", to: "admin#delete_record", as: :delete_record
+    post "/users/:user_id/generate_reset_link", to: "admin#generate_reset_link", as: :generate_reset_link
   end
 
   namespace :api do
