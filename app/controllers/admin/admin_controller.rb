@@ -95,6 +95,28 @@ class Admin::AdminController < ApplicationController
     render json: { error: "Record not found" }, status: :not_found
   end
 
+  # POST /admin/users/:user_id/generate_reset_link
+  def generate_reset_link
+    user = User.find(params[:user_id])
+
+    # Generate token using Devise's internal method (no email sent)
+    raw_token = user.send(:set_reset_password_token)
+
+    # Build the frontend URL
+    frontend_url = ENV.fetch("FRONTEND_URL", "http://localhost:3000")
+    reset_link = "#{frontend_url}/reset-password?token=#{raw_token}"
+
+    render json: {
+      success: true,
+      user: { id: user.id, name: user.name, email: user.email },
+      reset_link: reset_link,
+      expires_at: 24.hours.from_now.iso8601,
+      message: "Password reset link generated. Valid for 24 hours."
+    }
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: "User not found" }, status: :not_found
+  end
+
   private
 
   def valid_table?(table_name)
