@@ -52,27 +52,8 @@ Rails.application.configure do
   # Replace the default in-process and non-durable queuing backend for Active Job.
   # config.active_job.queue_adapter = :resque
 
-  # Enable email delivery errors in production to catch configuration issues
-  config.action_mailer.raise_delivery_errors = true
-  config.action_mailer.perform_deliveries = true
-  config.action_mailer.delivery_method = :smtp
-
-  # Set host to be used by links generated in mailer templates
-  config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "example.com") }
-
-  # SMTP configuration via environment variables
-  config.action_mailer.smtp_settings = {
-    address: ENV.fetch("SMTP_ADDRESS", "smtp.example.com"),
-    port: ENV.fetch("SMTP_PORT", 587).to_i,
-    domain: ENV.fetch("SMTP_DOMAIN", "example.com"),
-    user_name: ENV["SMTP_USERNAME"],
-    password: ENV["SMTP_PASSWORD"],
-    authentication: :plain,
-    enable_starttls_auto: ENV.fetch("SMTP_PORT", "587") == "587",
-    ssl: ENV.fetch("SMTP_PORT", "587") == "465",
-    open_timeout: 10,
-    read_timeout: 10
-  }
+  # Email delivery disabled - password resets handled via admin-generated links
+  config.action_mailer.perform_deliveries = false
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
