@@ -22,6 +22,12 @@ RSpec.describe BusinessLogic::GolferLimitValidationService, type: :model do
            unique_id: "tournament-3-#{current_year}")
   end
 
+  let!(:tournament4) do
+    create(:tournament,
+           start_date: Date.new(current_year, 4, 15),
+           unique_id: "tournament-4-#{current_year}")
+  end
+
   let!(:tournament_different_year) do
     create(:tournament,
            start_date: Date.new(current_year - 1, 1, 15),
@@ -51,10 +57,11 @@ RSpec.describe BusinessLogic::GolferLimitValidationService, type: :model do
 
     context 'when user has exactly reached the limit' do
       before do
-        # Create 3 picks for Scottie in current year (at the limit)
+        # Create 4 picks for Scottie in current year (at the limit)
         create(:match_pick, user: user, tournament: tournament1, golfer: scottie, drafted: true)
         create(:match_pick, user: user, tournament: tournament2, golfer: scottie, drafted: true)
         create(:match_pick, user: user, tournament: tournament3, golfer: scottie, drafted: true)
+        create(:match_pick, user: user, tournament: tournament4, golfer: scottie, drafted: true)
       end
 
       it 'blocks further selections of that golfer' do
@@ -67,22 +74,24 @@ RSpec.describe BusinessLogic::GolferLimitValidationService, type: :model do
         violation = result[:violations].first
         expect(violation[:golfer_id]).to eq(scottie.id)
         expect(violation[:golfer_name]).to eq("Scottie Scheffler")
-        expect(violation[:current_count]).to eq(3)
+        expect(violation[:current_count]).to eq(4)
         expect(violation[:message]).to include("Scottie Scheffler rule violation")
-        expect(violation[:message]).to include("3 times this year")
+        expect(violation[:message]).to include("4 times this year")
       end
     end
 
     context 'when user selects multiple golfers with violations' do
       before do
-        # Create 3 picks for both Scottie and Rory
+        # Create 4 picks for both Scottie and Rory (at the limit)
         create(:match_pick, user: user, tournament: tournament1, golfer: scottie, drafted: true)
         create(:match_pick, user: user, tournament: tournament2, golfer: scottie, drafted: true)
         create(:match_pick, user: user, tournament: tournament3, golfer: scottie, drafted: true)
+        create(:match_pick, user: user, tournament: tournament4, golfer: scottie, drafted: true)
 
         create(:match_pick, user: user, tournament: tournament1, golfer: rory, drafted: true)
         create(:match_pick, user: user, tournament: tournament2, golfer: rory, drafted: true)
         create(:match_pick, user: user, tournament: tournament3, golfer: rory, drafted: true)
+        create(:match_pick, user: user, tournament: tournament4, golfer: rory, drafted: true)
       end
 
       it 'returns the first violation only' do
@@ -121,10 +130,11 @@ RSpec.describe BusinessLogic::GolferLimitValidationService, type: :model do
 
     context 'when picks have drafted: false' do
       before do
-        # Create 3 picks with drafted: false (should not count)
+        # Create 4 picks with drafted: false (should still count)
         create(:match_pick, user: user, tournament: tournament1, golfer: scottie, drafted: false)
         create(:match_pick, user: user, tournament: tournament2, golfer: scottie, drafted: false)
         create(:match_pick, user: user, tournament: tournament3, golfer: scottie, drafted: false)
+        create(:match_pick, user: user, tournament: tournament4, golfer: scottie, drafted: false)
       end
 
       it 'counts all picks regardless of drafted status' do

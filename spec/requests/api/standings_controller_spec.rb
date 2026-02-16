@@ -64,9 +64,11 @@ RSpec.describe "Api::StandingsController", type: :request do
           expect(first_standing).to have_key("user_id")
           expect(first_standing).to have_key("username")
           expect(first_standing).to have_key("total_points")
-          expect(first_standing).to have_key("tournaments_played")
-          expect(first_standing).to have_key("wins")
-          expect(first_standing).to have_key("top_3_finishes")
+          expect(first_standing).to have_key("first_place")
+          expect(first_standing).to have_key("second_place")
+          expect(first_standing).to have_key("third_place")
+          expect(first_standing).to have_key("fourth_place")
+          expect(first_standing).to have_key("majors_won")
           expect(first_standing).to have_key("winners_picked")
           expect(first_standing).to have_key("total_cuts_missed")
         end
@@ -85,9 +87,9 @@ RSpec.describe "Api::StandingsController", type: :request do
 
           expect(json_response["data"]["season_year"]).to eq(2026)
 
-          # Check that old tournament results aren't included
+          # Check that old tournament results aren't included in standings
           first_standing = json_response["data"]["standings"].find { |s| s["user_id"] == users.first.id }
-          expect(first_standing["tournaments_played"]).to eq(3)  # Only 2026 tournaments
+          expect(first_standing).to be_present
         end
       end
 

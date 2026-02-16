@@ -43,7 +43,7 @@ RSpec.describe Admin::AdminController, type: :controller do
 
       it "returns correct associations for scores" do
         associations = controller.send(:associations_for_table, 'scores')
-        expect(associations).to eq([ :match_pick ])
+        expect(associations).to eq([ { match_pick: [ :golfer, :user ] } ])
       end
 
       it "returns empty array for tables without associations" do

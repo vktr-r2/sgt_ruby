@@ -15,7 +15,7 @@ RSpec.describe Importers::TournamentImporter, type: :model do
   let(:golfer_mapper_1) { instance_double(Mappers::GolferMapper, map_to_attributes: golfer_attributes_1) }
   let(:golfer_mapper_2) { instance_double(Mappers::GolferMapper, map_to_attributes: golfer_attributes_2) }
 
-  let(:tournament_attributes) { { "tournament_id" => "t1", "year" => 2025, "name" => "Test Tournament" } }
+  let(:tournament_attributes) { { "tournament_id" => "t1", "year" => 2025, "name" => "Test Tournament", "unique_id" => "t1-2025" } }
   let(:golfer_attributes_1) { { "source_id" => "g1", "name" => "Golfer One" } }
   let(:golfer_attributes_2) { { "source_id" => "g2", "name" => "Golfer Two" } }
 
@@ -29,8 +29,8 @@ RSpec.describe Importers::TournamentImporter, type: :model do
 
   before do
     allow(Mappers::TournamentMapper).to receive(:new).with(tourn_data).and_return(tournament_mapper)
-    allow(Mappers::GolferMapper).to receive(:new).with(tourn_data["players"].first, "12345").and_return(golfer_mapper_1)
-    allow(Mappers::GolferMapper).to receive(:new).with(tourn_data["players"].last, "12345").and_return(golfer_mapper_2)
+    allow(Mappers::GolferMapper).to receive(:new).with(tourn_data["players"].first, "t1-2025").and_return(golfer_mapper_1)
+    allow(Mappers::GolferMapper).to receive(:new).with(tourn_data["players"].last, "t1-2025").and_return(golfer_mapper_2)
     allow(Tournament).to receive(:find_by).and_return(tournament)
     allow(Golfer).to receive(:find_or_initialize_by).with(source_id: "g1").and_return(golfer_1)
     allow(Golfer).to receive(:find_or_initialize_by).with(source_id: "g2").and_return(golfer_2)
