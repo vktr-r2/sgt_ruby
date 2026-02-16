@@ -51,14 +51,7 @@ RSpec.describe RapidApi::BaseClient do
     context "when the request fails with a client error (4xx)" do
       before do
         stub_request(:get, "#{base_url}#{url_path}")
-          .with(
-            headers: default_headers.merge(
-              "Accept" => "*/*",
-              "Accept-Encoding" => "gzip;q=1.0,deflate;q=0.6,identity;q=0.3",
-              "User-Agent" => "Faraday v2.12.2"
-            ),
-            query: params
-          )
+          .with(headers: default_headers, query: params)
           .to_return(status: 404, body: "Not Found")
       end
 
@@ -72,21 +65,14 @@ RSpec.describe RapidApi::BaseClient do
     context "when a Faraday::TimeoutError is raised" do
       before do
         stub_request(:get, "#{base_url}#{url_path}")
-        .with(
-            headers: default_headers.merge(
-              "Accept" => "*/*",
-              "Accept-Encoding" => "gzip;q=1.0,deflate;q=0.6,identity;q=0.3",
-              "User-Agent" => "Faraday v2.12.2"
-            ),
-            query: params
-          )
+          .with(headers: default_headers, query: params)
           .to_timeout
       end
 
       it "logs the timeout error and returns nil" do
         expect(Rails.logger).to receive(:error).with("Failed to connect to API: execution expired")
         result = client.send(:make_request, url_path, params)
-          expect(result).to be_nil
+        expect(result).to be_nil
       end
     end
   end

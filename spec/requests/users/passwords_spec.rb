@@ -121,8 +121,8 @@ RSpec.describe 'Users::Passwords', type: :request do
 
     context 'with expired token' do
       it 'returns error message' do
-        # Set reset_password_sent_at to 7 hours ago (token expires in 6 hours)
-        user.update_column(:reset_password_sent_at, 7.hours.ago)
+        # Set reset_password_sent_at to 25 hours ago (token expires in 24 hours)
+        user.update_column(:reset_password_sent_at, 25.hours.ago)
 
         put '/users/password', params: {
           user: {

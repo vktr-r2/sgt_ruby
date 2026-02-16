@@ -71,12 +71,13 @@ RSpec.describe Api::SeasonDetailService do
           expect(standing).to have_key(:user_id)
           expect(standing).to have_key(:username)
           expect(standing).to have_key(:total_points)
-          expect(standing).to have_key(:tournaments_played)
-          expect(standing).to have_key(:wins)
-          expect(standing).to have_key(:top_3_finishes)
+          expect(standing).to have_key(:first_place)
+          expect(standing).to have_key(:second_place)
+          expect(standing).to have_key(:third_place)
+          expect(standing).to have_key(:fourth_place)
+          expect(standing).to have_key(:majors_won)
           expect(standing).to have_key(:winners_picked)
           expect(standing).to have_key(:total_cuts_missed)
-          expect(standing).to have_key(:majors_won)
         end
       end
 

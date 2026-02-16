@@ -84,8 +84,9 @@ RSpec.describe Api::TournamentScoresService do
       end
 
       it "marks replaced golfers correctly" do
-        replaced_golfer = golfers.last
-        original_golfer = golfers.first
+        # Create unique golfers for this test to avoid collision with sample data
+        replaced_golfer = create(:golfer, tournament: tournament)
+        original_golfer = create(:golfer, tournament: tournament)
 
         match_pick = create(:match_pick,
           user: users.first,
