@@ -10,26 +10,26 @@ RSpec.describe Api::TournamentResultsService do
       before do
         users.each_with_index do |u, index|
           create(:match_result,
-            user: u,
-            tournament: tournament,
-            place: index + 1,
-            total_score: -(4 - index),
-            winner_picked: index.zero?,
-            cuts_missed: index)
+                 user: u,
+                 tournament: tournament,
+                 place: index + 1,
+                 total_score: -(4 - index),
+                 winner_picked: index.zero?,
+                 cuts_missed: index)
 
           golfers.sample(4).each do |golfer|
             match_pick = create(:match_pick,
-              user: u,
-              tournament: tournament,
-              golfer: golfer,
-              drafted: true)
+                                user: u,
+                                tournament: tournament,
+                                golfer: golfer,
+                                drafted: true)
 
             4.times do |round_num|
               create(:score,
-                match_pick: match_pick,
-                round: round_num + 1,
-                score: 70,
-                status: "complete")
+                     match_pick: match_pick,
+                     round: round_num + 1,
+                     score: 70,
+                     status: "complete")
             end
           end
         end

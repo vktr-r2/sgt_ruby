@@ -8,29 +8,29 @@ RSpec.describe Api::SeasonDetailService do
       # Create 3 tournaments for 2025 (2 majors, 1 regular)
       let!(:tournament_1) do
         create(:tournament,
-          name: "The Masters",
-          year: 2025,
-          start_date: Date.new(2025, 4, 10),
-          end_date: Date.new(2025, 4, 13),
-          major_championship: true)
+               name: "The Masters",
+               year: 2025,
+               start_date: Date.new(2025, 4, 10),
+               end_date: Date.new(2025, 4, 13),
+               major_championship: true)
       end
 
       let!(:tournament_2) do
         create(:tournament,
-          name: "Genesis Invitational",
-          year: 2025,
-          start_date: Date.new(2025, 2, 15),
-          end_date: Date.new(2025, 2, 18),
-          major_championship: false)
+               name: "Genesis Invitational",
+               year: 2025,
+               start_date: Date.new(2025, 2, 15),
+               end_date: Date.new(2025, 2, 18),
+               major_championship: false)
       end
 
       let!(:tournament_3) do
         create(:tournament,
-          name: "PGA Championship",
-          year: 2025,
-          start_date: Date.new(2025, 5, 15),
-          end_date: Date.new(2025, 5, 18),
-          major_championship: true)
+               name: "PGA Championship",
+               year: 2025,
+               start_date: Date.new(2025, 5, 15),
+               end_date: Date.new(2025, 5, 18),
+               major_championship: true)
       end
 
       before do

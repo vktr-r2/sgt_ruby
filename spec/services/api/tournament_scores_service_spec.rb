@@ -15,20 +15,20 @@ RSpec.describe Api::TournamentScoresService do
         users.each_with_index do |u, user_index|
           golfers.sample(4).each_with_index do |golfer, pick_index|
             match_pick = create(:match_pick,
-              user: u,
-              tournament: tournament,
-              golfer: golfer,
-              drafted: true,
-              priority: pick_index + 1)
+                                user: u,
+                                tournament: tournament,
+                                golfer: golfer,
+                                drafted: true,
+                                priority: pick_index + 1)
 
             # Create scores - vary by user to ensure proper sorting
             2.times do |round_num|
               create(:score,
-                match_pick: match_pick,
-                round: round_num + 1,
-                score: 70 + (user_index * 2),  # Different totals per user
-                position: "T#{user_index + 1}",
-                status: "active")
+                     match_pick: match_pick,
+                     round: round_num + 1,
+                     score: 70 + (user_index * 2),  # Different totals per user
+                     position: "T#{user_index + 1}",
+                     status: "active")
             end
           end
         end
@@ -89,19 +89,19 @@ RSpec.describe Api::TournamentScoresService do
         original_golfer = create(:golfer, tournament: tournament)
 
         match_pick = create(:match_pick,
-          user: users.first,
-          tournament: tournament,
-          golfer: replaced_golfer,
-          original_golfer_id: original_golfer.id,
-          drafted: true,
-          priority: 5)
+                            user: users.first,
+                            tournament: tournament,
+                            golfer: replaced_golfer,
+                            original_golfer_id: original_golfer.id,
+                            drafted: true,
+                            priority: 5)
 
         create(:score,
-          match_pick: match_pick,
-          round: 1,
-          score: 72,
-          position: "T10",
-          status: "active")
+               match_pick: match_pick,
+               round: 1,
+               score: 72,
+               position: "T10",
+               status: "active")
 
         result = described_class.call
 

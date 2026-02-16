@@ -64,9 +64,9 @@ RSpec.describe LeaderboardSnapshot, type: :model do
     context "when snapshot already exists for tournament" do
       let!(:existing_snapshot) do
         create(:leaderboard_snapshot,
-          tournament: tournament,
-          leaderboard_data: [{ "player_id" => "old" }],
-          current_round: 1
+               tournament: tournament,
+               leaderboard_data: [ { "player_id" => "old" } ],
+               current_round: 1
         )
       end
 
@@ -101,8 +101,8 @@ RSpec.describe LeaderboardSnapshot, type: :model do
       let!(:other_tournament) { create(:tournament) }
       let!(:other_snapshot) do
         create(:leaderboard_snapshot,
-          tournament: other_tournament,
-          leaderboard_data: [{ "player_id" => "other" }]
+               tournament: other_tournament,
+               leaderboard_data: [ { "player_id" => "other" } ]
         )
       end
 
