@@ -19,14 +19,51 @@ module Api
     private
 
     def build_standings
-      User.joins(:match_results)
-          .joins("INNER JOIN tournaments ON match_results.tournament_id = tournaments.id")
-          .where("EXTRACT(YEAR FROM tournaments.start_date) = ?", @year)
-          .distinct
-          .includes(match_results: :tournament)
-          .map { |user| user_standing(user) }
-          .sort_by { |standing| standing[:total_points] }
-          .each_with_index { |standing, index| standing[:rank] = index + 1 }
+      standings = User.joins(:match_results)
+                      .joins("INNER JOIN tournaments ON match_results.tournament_id = tournaments.id")
+                      .where("EXTRACT(YEAR FROM tournaments.start_date) = ?", @year)
+                      .distinct
+                      .includes(match_results: :tournament)
+                      .map { |user| user_standing(user) }
+
+      sort_with_tiebreakers(standings)
+      assign_ranks_with_ties(standings)
+    end
+
+    def sort_with_tiebreakers(standings)
+      standings.sort_by! do |s|
+        [
+          s[:total_points],         # Primary: lower is better (ascending)
+          -s[:first_place],         # Tiebreaker 1: more firsts is better (descending)
+          -s[:winners_picked],      # Tiebreaker 2: more winners picked is better (descending)
+          -s[:second_place],        # Tiebreaker 3: more seconds is better (descending)
+          -s[:third_place]          # Tiebreaker 4: more thirds is better (descending)
+        ]
+      end
+    end
+
+    def assign_ranks_with_ties(standings)
+      standings.each_with_index do |standing, index|
+        if index.zero?
+          standing[:rank] = 1
+        else
+          prev = standings[index - 1]
+          if same_tiebreaker_stats?(standing, prev)
+            standing[:rank] = prev[:rank]
+          else
+            standing[:rank] = index + 1
+          end
+        end
+      end
+      standings
+    end
+
+    def same_tiebreaker_stats?(a, b)
+      a[:total_points] == b[:total_points] &&
+        a[:first_place] == b[:first_place] &&
+        a[:winners_picked] == b[:winners_picked] &&
+        a[:second_place] == b[:second_place] &&
+        a[:third_place] == b[:third_place]
     end
 
     def user_standing(user)
