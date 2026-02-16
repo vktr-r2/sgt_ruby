@@ -20,20 +20,20 @@ RSpec.describe "Api::TournamentsController", type: :request do
           users.each_with_index do |u, user_index|
             golfers.sample(4).each_with_index do |golfer, pick_index|
               match_pick = create(:match_pick,
-                user: u,
-                tournament: tournament,
-                golfer: golfer,
-                drafted: true,
-                priority: pick_index + 1)
+                                  user: u,
+                                  tournament: tournament,
+                                  golfer: golfer,
+                                  drafted: true,
+                                  priority: pick_index + 1)
 
               # Create scores for 2 rounds
               2.times do |round_num|
                 create(:score,
-                  match_pick: match_pick,
-                  round: round_num + 1,
-                  score: 70 + user_index + pick_index,
-                  position: "T#{(user_index * 4 + pick_index + 1)}",
-                  status: "active")
+                       match_pick: match_pick,
+                       round: round_num + 1,
+                       score: 70 + user_index + pick_index,
+                       position: "T#{(user_index * 4 + pick_index + 1)}",
+                       status: "active")
               end
             end
           end
@@ -111,19 +111,19 @@ RSpec.describe "Api::TournamentsController", type: :request do
           replaced_golfer = golfers.last
           original_golfer = golfers.first
           match_pick = create(:match_pick,
-            user: users.first,
-            tournament: tournament,
-            golfer: replaced_golfer,
-            original_golfer_id: original_golfer.id,
-            drafted: true,
-            priority: 5)
+                              user: users.first,
+                              tournament: tournament,
+                              golfer: replaced_golfer,
+                              original_golfer_id: original_golfer.id,
+                              drafted: true,
+                              priority: 5)
 
           create(:score,
-            match_pick: match_pick,
-            round: 1,
-            score: 72,
-            position: "T10",
-            status: "active")
+                 match_pick: match_pick,
+                 round: 1,
+                 score: 72,
+                 position: "T10",
+                 status: "active")
 
           get "/api/tournaments/current/scores", headers: headers
           json_response = JSON.parse(response.body)
@@ -230,27 +230,27 @@ RSpec.describe "Api::TournamentsController", type: :request do
         before do
           users.each_with_index do |u, index|
             create(:match_result,
-              user: u,
-              tournament: tournament,
-              place: index + 1,
-              total_score: -(4 - index),
-              winner_picked: index.zero?,
-              cuts_missed: index)
+                   user: u,
+                   tournament: tournament,
+                   place: index + 1,
+                   total_score: -(4 - index),
+                   winner_picked: index.zero?,
+                   cuts_missed: index)
 
             # Create match picks with scores
             golfers.sample(4).each do |golfer|
               match_pick = create(:match_pick,
-                user: u,
-                tournament: tournament,
-                golfer: golfer,
-                drafted: true)
+                                  user: u,
+                                  tournament: tournament,
+                                  golfer: golfer,
+                                  drafted: true)
 
               4.times do |round_num|
                 create(:score,
-                  match_pick: match_pick,
-                  round: round_num + 1,
-                  score: 70,
-                  status: "complete")
+                       match_pick: match_pick,
+                       round: round_num + 1,
+                       score: 70,
+                       status: "complete")
               end
             end
           end

@@ -8,30 +8,30 @@ RSpec.describe Api::SeasonsListService do
       # Create 2025 season (2 tournaments)
       let!(:tournament_2025_1) do
         create(:tournament,
-          name: "The Masters 2025",
-          year: 2025,
-          start_date: Date.new(2025, 1, 10),
-          end_date: Date.new(2025, 1, 13),
-          major_championship: true)
+               name: "The Masters 2025",
+               year: 2025,
+               start_date: Date.new(2025, 1, 10),
+               end_date: Date.new(2025, 1, 13),
+               major_championship: true)
       end
 
       let!(:tournament_2025_2) do
         create(:tournament,
-          name: "PGA Championship 2025",
-          year: 2025,
-          start_date: Date.new(2025, 1, 17),
-          end_date: Date.new(2025, 1, 20),
-          major_championship: true)
+               name: "PGA Championship 2025",
+               year: 2025,
+               start_date: Date.new(2025, 1, 17),
+               end_date: Date.new(2025, 1, 20),
+               major_championship: true)
       end
 
       # Create 2024 season (1 tournament)
       let!(:tournament_2024_1) do
         create(:tournament,
-          name: "Genesis Invitational 2024",
-          year: 2024,
-          start_date: Date.new(2024, 1, 10),
-          end_date: Date.new(2024, 1, 13),
-          major_championship: false)
+               name: "Genesis Invitational 2024",
+               year: 2024,
+               start_date: Date.new(2024, 1, 10),
+               end_date: Date.new(2024, 1, 13),
+               major_championship: false)
       end
 
       before do
@@ -63,7 +63,7 @@ RSpec.describe Api::SeasonsListService do
         expect(result[:seasons].length).to eq(2)
 
         years = result[:seasons].map { |s| s[:year] }
-        expect(years).to eq([2025, 2024])
+        expect(years).to eq([ 2025, 2024 ])
       end
 
       it "includes correct tournament count per season" do
@@ -106,7 +106,7 @@ RSpec.describe Api::SeasonsListService do
 
         # Check rankings are correct (sorted by total_points ascending)
         ranks = season_2025[:standings_preview].map { |s| s[:rank] }
-        expect(ranks).to eq([1, 2, 3, 4])
+        expect(ranks).to eq([ 1, 2, 3, 4 ])
       end
 
       it "calculates majors won correctly" do
@@ -123,7 +123,7 @@ RSpec.describe Api::SeasonsListService do
         expect(season_2025[:majors_won]).to have_key(:count)
 
         # Either user1 or user2 should be the leader (both have 1 major win)
-        expect([users[0].id, users[1].id]).to include(season_2025[:majors_won][:user_id])
+        expect([ users[0].id, users[1].id ]).to include(season_2025[:majors_won][:user_id])
         expect(season_2025[:majors_won][:count]).to eq(1)
       end
 

@@ -10,12 +10,12 @@ RSpec.describe Api::SeasonStandingsService do
         users.each_with_index do |u, user_index|
           tournaments.each_with_index do |tournament, tourn_index|
             create(:match_result,
-              user: u,
-              tournament: tournament,
-              place: ((user_index + tourn_index) % 4) + 1,
-              total_score: -((user_index + tourn_index) % 4) - 1,
-              winner_picked: (user_index + tourn_index).even?,
-              cuts_missed: user_index)
+                   user: u,
+                   tournament: tournament,
+                   place: ((user_index + tourn_index) % 4) + 1,
+                   total_score: -((user_index + tourn_index) % 4) - 1,
+                   winner_picked: (user_index + tourn_index).even?,
+                   cuts_missed: user_index)
           end
         end
       end
@@ -92,10 +92,10 @@ RSpec.describe Api::SeasonStandingsService do
         # Create older tournament
         old_tournament = create(:tournament, year: 2025, start_date: Date.new(2025, 1, 15))
         create(:match_result,
-          user: users.first,
-          tournament: old_tournament,
-          place: 1,
-          total_score: -4)
+               user: users.first,
+               tournament: old_tournament,
+               place: 1,
+               total_score: -4)
 
         result = described_class.call(2026)
 
