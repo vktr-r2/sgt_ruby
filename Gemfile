@@ -47,6 +47,10 @@ gem "rack-cors"
 # Rate limiting and throttling
 gem "rack-attack"
 
+# Pin connection_pool to 2.x for Rails 8 compatibility
+# (connection_pool 3.0+ uses keyword-only args, incompatible with ActiveSupport 8.0.x)
+gem "connection_pool", "~> 2.4"
+
 # Devise for authentication
 gem "devise"
 
