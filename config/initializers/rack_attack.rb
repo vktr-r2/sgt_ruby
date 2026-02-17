@@ -3,10 +3,11 @@
 class Rack::Attack
   ### Configure Cache ###
   # Use Rails cache (Redis in production)
-  # Note: Using pool_size/pool_timeout to work around connection_pool 3.0+ API change
   if ENV["REDIS_URL"]
-    redis_pool = ConnectionPool.new(size: 5, timeout: 1) { Redis.new(url: ENV["REDIS_URL"]) }
-    Rack::Attack.cache.store = ActiveSupport::Cache::RedisCacheStore.new(redis: redis_pool)
+    Rack::Attack.cache.store = ActiveSupport::Cache::RedisCacheStore.new(
+      url: ENV["REDIS_URL"],
+      pool: { size: 5, timeout: 1 }
+    )
   end
 
   # Disable throttling in test environment (except for rack_attack_spec)
