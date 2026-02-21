@@ -31,6 +31,7 @@ module Api
         start_date: tournament.start_date.to_s,
         end_date: tournament.end_date.to_s,
         is_major: tournament.major_championship,
+        par: tournament.par,
         current_round: snapshot&.current_round,
         cut_line: cut_line_data(snapshot)
       }
