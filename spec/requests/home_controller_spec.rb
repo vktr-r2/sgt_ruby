@@ -84,8 +84,9 @@ RSpec.describe 'HomeController', type: :request do
 
         json_response = JSON.parse(response.body)
 
-        expect(json_response).to include('current_tournament', 'app_info')
+        expect(json_response).to include('current_tournament', 'recently_completed_tournament', 'app_info')
         expect(json_response['current_tournament']).to be_a(Hash)
+        expect(json_response['recently_completed_tournament']).to be_nil
         expect(json_response['app_info']).to be_a(Hash)
       end
     end
@@ -124,9 +125,84 @@ RSpec.describe 'HomeController', type: :request do
 
         json_response = JSON.parse(response.body)
 
-        expect(json_response).to include('current_tournament', 'app_info')
+        expect(json_response).to include('current_tournament', 'recently_completed_tournament', 'app_info')
         expect(json_response['current_tournament']).to be_nil
         expect(json_response['app_info']).to be_a(Hash)
+      end
+    end
+
+    context 'during transition period (no current tournament, recently completed exists)' do
+      let!(:completed_tournament) do
+        create(:tournament,
+               name: 'Arnold Palmer Invitational',
+               end_date: Date.current - 1.day,
+               major_championship: false)
+      end
+
+      before do
+        allow_any_instance_of(BusinessLogic::TournamentService)
+          .to receive(:current_tournament).and_return(nil)
+        allow_any_instance_of(BusinessLogic::TournamentService)
+          .to receive(:recently_completed_tournament).and_return(completed_tournament)
+      end
+
+      it 'returns recently_completed_tournament payload' do
+        get '/', headers: auth_headers
+
+        json_response = JSON.parse(response.body)
+        recently_completed = json_response['recently_completed_tournament']
+
+        expect(recently_completed).to be_present
+        expect(recently_completed['id']).to eq(completed_tournament.id)
+        expect(recently_completed['name']).to eq('Arnold Palmer Invitational')
+        expect(recently_completed['end_date']).to eq(completed_tournament.end_date.as_json)
+        expect(recently_completed['is_major']).to eq(false)
+      end
+
+      it 'returns null for current_tournament during transition' do
+        get '/', headers: auth_headers
+
+        json_response = JSON.parse(response.body)
+        expect(json_response['current_tournament']).to be_nil
+      end
+    end
+
+    context 'when active tournament exists (not transition period)' do
+      let!(:tournament) do
+        create(:tournament,
+               name: 'Test Championship',
+               start_date: Date.current,
+               end_date: Date.current + 3.days,
+               week_number: Date.current.strftime("%V").to_i,
+               year: Date.current.year)
+      end
+
+      before do
+        allow_any_instance_of(BusinessLogic::TournamentService)
+          .to receive(:current_tournament).and_return(tournament)
+      end
+
+      it 'returns null for recently_completed_tournament when active tournament exists' do
+        get '/', headers: auth_headers
+
+        json_response = JSON.parse(response.body)
+        expect(json_response['recently_completed_tournament']).to be_nil
+      end
+    end
+
+    context 'in true off-season (no current, no recently completed)' do
+      before do
+        allow_any_instance_of(BusinessLogic::TournamentService)
+          .to receive(:current_tournament).and_return(nil)
+        allow_any_instance_of(BusinessLogic::TournamentService)
+          .to receive(:recently_completed_tournament).and_return(nil)
+      end
+
+      it 'returns null for recently_completed_tournament in true off-season' do
+        get '/', headers: auth_headers
+
+        json_response = JSON.parse(response.body)
+        expect(json_response['recently_completed_tournament']).to be_nil
       end
     end
 
@@ -193,6 +269,7 @@ RSpec.describe 'HomeController', type: :request do
         allow(BusinessLogic::TournamentService).to receive(:new).and_return(tournament_service)
         allow(BusinessLogic::DraftWindowService).to receive(:new).and_return(instance_double(BusinessLogic::DraftWindowService, draft_window_status: 'before_window', draft_open?: false))
         expect(tournament_service).to receive(:current_tournament).at_least(:once).and_return(nil)
+        allow(tournament_service).to receive(:recently_completed_tournament).and_return(nil)
 
         get '/', headers: auth_headers
       end

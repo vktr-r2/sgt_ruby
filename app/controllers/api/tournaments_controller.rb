@@ -19,6 +19,7 @@ module Api
 
       query = Tournament.where("end_date < ?", Date.current).order(start_date: :desc)
       query = query.where(year: year) if year.present?
+      query = query.where.not(id: params[:exclude_id].to_i) if params[:exclude_id].present?
 
       total_count = query.count
       tournaments = query.limit(per_page).offset((page - 1) * per_page)
