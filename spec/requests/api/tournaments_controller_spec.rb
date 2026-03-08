@@ -210,6 +210,23 @@ RSpec.describe "Api::TournamentsController", type: :request do
         expect(pagination).to have_key("total_count")
         expect(pagination).to have_key("per_page")
       end
+
+      it "excludes tournament matching exclude_id param" do
+        excluded = past_tournaments.first
+        get "/api/tournaments/history", headers: headers, params: { exclude_id: excluded.id }
+        json_response = JSON.parse(response.body)
+
+        tournament_ids = json_response["data"]["tournaments"].map { |t| t["id"] }
+        expect(tournament_ids).not_to include(excluded.id)
+        expect(tournament_ids.length).to eq(past_tournaments.length - 1)
+      end
+
+      it "returns all tournaments when no exclude_id provided" do
+        get "/api/tournaments/history", headers: headers
+        json_response = JSON.parse(response.body)
+
+        expect(json_response["data"]["tournaments"].length).to eq(past_tournaments.length)
+      end
     end
 
     context "without authentication" do

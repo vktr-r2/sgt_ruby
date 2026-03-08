@@ -174,6 +174,97 @@ RSpec.describe BusinessLogic::TournamentService do
     end
   end
 
+  describe '#recently_completed_tournament' do
+    context 'when current_tournament is present (current week)' do
+      let!(:current_week_tournament) do
+        create(:tournament,
+               week_number: test_date.strftime("%V").to_i,
+               year: test_date.year,
+               name: 'Current Tournament')
+      end
+
+      it 'returns nil' do
+        expect(service.recently_completed_tournament).to be_nil
+      end
+    end
+
+    context 'in true off-season with no tournaments in DB' do
+      it 'returns nil' do
+        expect(service.recently_completed_tournament).to be_nil
+      end
+    end
+
+    context 'with a recently ended tournament that has match_results' do
+      let!(:completed_tournament) do
+        create(:tournament,
+               week_number: test_date.strftime("%V").to_i - 1,
+               year: test_date.year,
+               start_date: test_date - 6.days,
+               end_date: test_date - 2.days,
+               name: 'Last Week Tournament')
+      end
+
+      before do
+        create(:match_result, tournament: completed_tournament, user: create(:user), place: 1)
+      end
+
+      it 'returns the most recently ended tournament with match_results' do
+        expect(service.recently_completed_tournament).to eq(completed_tournament)
+      end
+    end
+
+    context 'with an ended tournament that has no match_results yet' do
+      let!(:completed_without_results) do
+        create(:tournament,
+               week_number: test_date.strftime("%V").to_i - 1,
+               year: test_date.year,
+               start_date: test_date - 6.days,
+               end_date: test_date - 2.days,
+               name: 'Tournament Without Results')
+      end
+
+      it 'returns nil (race condition guard)' do
+        expect(service.recently_completed_tournament).to be_nil
+      end
+    end
+
+    context 'when the only ended tournament is from a prior year' do
+      let!(:prior_year_tournament) do
+        create(:tournament,
+               week_number: 50,
+               year: test_date.year - 1,
+               start_date: Date.new(test_date.year - 1, 12, 10),
+               end_date: Date.new(test_date.year - 1, 12, 13),
+               name: 'Last Year Tournament')
+      end
+
+      before do
+        create(:match_result, tournament: prior_year_tournament, user: create(:user), place: 1)
+      end
+
+      it 'returns nil due to year scope' do
+        expect(service.recently_completed_tournament).to be_nil
+      end
+    end
+
+    context 'when draft window is currently open (current_tournament present via draft window)' do
+      let!(:draft_window_tournament) do
+        start_date = test_date + 2.days
+        create(:tournament,
+               week_number: start_date.strftime("%V").to_i,
+               year: test_date.year,
+               start_date: start_date,
+               end_date: start_date + 3.days,
+               name: 'Draft Window Tournament')
+      end
+
+      it 'returns nil because current_tournament is present' do
+        allow(Time.zone).to receive(:now).and_return(test_date.beginning_of_day)
+        expect(service.recently_completed_tournament).to be_nil
+      end
+    end
+  end
+
   describe '#is_major?' do
     it 'identifies major tournaments correctly (case insensitive)' do
       expect(service.is_major?('Masters Tournament')).to be true
