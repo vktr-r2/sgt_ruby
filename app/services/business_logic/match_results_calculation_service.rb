@@ -27,29 +27,31 @@ module BusinessLogic
       # Sort by total strokes (lowest first)
       user_totals.sort_by! { |ut| ut[:total_strokes] }
 
-      # Assign placements and create match results
-      user_totals.each_with_index do |user_total, index|
-        place = index + 1
-        points = calculate_points(place)
+      # Assign placements and create match results (all-or-nothing)
+      ActiveRecord::Base.transaction do
+        user_totals.each_with_index do |user_total, index|
+          place = index + 1
+          points = calculate_points(place)
 
-        # Add major championship bonus for winner
-        if @tournament.major_championship && place == 1
-          points -= 2
+          # Add major championship bonus for winner
+          if @tournament.major_championship && place == 1
+            points -= 2
+          end
+
+          # Add winner picked bonus
+          if user_total[:drafted_winner]
+            points -= 1
+          end
+
+          MatchResult.create!(
+            tournament: @tournament,
+            user: user_total[:user],
+            place: place,
+            total_score: points,
+            winner_picked: user_total[:drafted_winner],
+            cuts_missed: user_total[:cuts_missed]
+          )
         end
-
-        # Add winner picked bonus
-        if user_total[:drafted_winner]
-          points -= 1
-        end
-
-        MatchResult.create!(
-          tournament: @tournament,
-          user: user_total[:user],
-          place: place,
-          total_score: points,
-          winner_picked: user_total[:drafted_winner],
-          cuts_missed: user_total[:cuts_missed]
-        )
       end
 
       Rails.logger.info "Match results calculated for tournament #{@tournament.id}"

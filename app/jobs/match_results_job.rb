@@ -8,9 +8,17 @@ class MatchResultsJob < ApplicationJob
 
     return nil if tournament.blank?
 
+    if tournament.match_results.exists?
+      Rails.logger.info "Match results already exist for #{tournament.name}, skipping"
+      return nil
+    end
+
     # Calculate and store match results
     BusinessLogic::MatchResultsCalculationService.new(tournament).calculate
     Rails.logger.info "Match results calculated successfully for #{tournament.name}"
+  rescue StandardError => e
+    Rails.logger.error "MatchResultsJob failed for tournament #{tournament&.name}: #{e.message}"
+    raise
   end
 
   def setup
