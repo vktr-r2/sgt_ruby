@@ -167,6 +167,24 @@ railway up
 railway run rails db:migrate
 ```
 
+### Accessing the Production Rails Console
+
+```bash
+# 1. Login to Railway
+railway login
+
+# 2. Link to project
+railway link
+
+# 3. In the Railway dashboard, right-click on the sgt_ruby service
+#    and select "Copy SSH command"
+
+# 4. Paste the copied SSH command in your terminal and hit enter
+
+# 5. Once inside the container shell, start the Rails console
+rails console
+```
+
 ---
 
 ## API Endpoints
