@@ -50,6 +50,7 @@ module BusinessLogic
       MatchPick.joins(:tournament)
               .where(user_id: @user_id)
               .where(tournaments: { unique_id: tournament_unique_ids })
+              .where(drafted: true)
               .pluck(:golfer_id)
     end
 
