@@ -130,20 +130,37 @@ RSpec.describe BusinessLogic::GolferLimitValidationService, type: :model do
 
     context 'when picks have drafted: false' do
       before do
-        # Create 4 picks with drafted: false (should still count)
+        # Create 4 picks with drafted: false (golfer was never actually used in a tournament)
         create(:match_pick, user: user, tournament: tournament1, golfer: scottie, drafted: false)
         create(:match_pick, user: user, tournament: tournament2, golfer: scottie, drafted: false)
         create(:match_pick, user: user, tournament: tournament3, golfer: scottie, drafted: false)
         create(:match_pick, user: user, tournament: tournament4, golfer: scottie, drafted: false)
       end
 
-      it 'counts all picks regardless of drafted status' do
+      it 'does not count unconfirmed picks toward the limit' do
         service = described_class.new(user.id, [ scottie.id ])
         result = service.validate
 
-        expect(result[:valid]).to be false
-        expect(result[:violations]).not_to be_empty
-        expect(result[:violations].first[:message]).to include('Scottie Scheffler rule violation')
+        expect(result[:valid]).to be true
+        expect(result[:violations]).to be_empty
+      end
+    end
+
+    context 'when user has a mix of drafted and non-drafted picks' do
+      before do
+        # 3 confirmed picks (drafted: true) + 1 unconfirmed (drafted: false)
+        create(:match_pick, user: user, tournament: tournament1, golfer: scottie, drafted: true)
+        create(:match_pick, user: user, tournament: tournament2, golfer: scottie, drafted: true)
+        create(:match_pick, user: user, tournament: tournament3, golfer: scottie, drafted: true)
+        create(:match_pick, user: user, tournament: tournament4, golfer: scottie, drafted: false)
+      end
+
+      it 'only counts drafted picks toward the limit' do
+        service = described_class.new(user.id, [ scottie.id ])
+        result = service.validate
+
+        expect(result[:valid]).to be true
+        expect(result[:violations]).to be_empty
       end
     end
 
