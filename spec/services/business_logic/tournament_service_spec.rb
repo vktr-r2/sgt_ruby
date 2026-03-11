@@ -208,7 +208,7 @@ RSpec.describe BusinessLogic::TournamentService do
         create(:match_result, tournament: completed_tournament, user: create(:user), place: 1)
       end
 
-      it 'returns the most recently ended tournament with match_results' do
+      it 'returns the most recently ended tournament' do
         expect(service.recently_completed_tournament).to eq(completed_tournament)
       end
     end
@@ -223,8 +223,8 @@ RSpec.describe BusinessLogic::TournamentService do
                name: 'Tournament Without Results')
       end
 
-      it 'returns nil (race condition guard)' do
-        expect(service.recently_completed_tournament).to be_nil
+      it 'returns the tournament even without match_results (transition shows immediately)' do
+        expect(service.recently_completed_tournament).to eq(completed_without_results)
       end
     end
 
