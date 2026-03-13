@@ -62,9 +62,10 @@ module Importers
         save_single_round(match_pick, round_number, strokes, player_status, player_position, "F")
       end
 
-      # Check if current round is in progress (not in rounds array yet)
+      # Check if current round needs saving via currentRoundScore
+      # (covers in-progress rounds AND the API lag window where roundComplete=true
+      # but the score hasn't yet moved into the rounds array)
       return unless current_round_num && current_round_num.between?(1, 4)
-      return if round_complete # Round is complete, should be in rounds array
 
       # Check if current round already exists in rounds array
       current_round_in_array = rounds.any? do |r|
@@ -103,6 +104,7 @@ module Importers
     # Assumes par 72 per round
     def convert_score_to_par_to_strokes(score_to_par)
       return nil unless score_to_par
+      return nil if score_to_par == "-" # API placeholder: player hasn't started yet
 
       par = @tournament.par || 72
 
