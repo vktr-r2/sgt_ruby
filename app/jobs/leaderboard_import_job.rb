@@ -1,6 +1,8 @@
 class LeaderboardImportJob < ApplicationJob
   queue_as :default
 
+  TARGET_TIMES = [ [ 10, 0 ], [ 12, 30 ], [ 15, 0 ], [ 17, 30 ], [ 20, 0 ] ].freeze
+
   def perform
     # Only fetch leaderboard data during active tournament days (Thu-Sun typically)
     unless Tournament.any_in_progress?
@@ -11,6 +13,12 @@ class LeaderboardImportJob < ApplicationJob
     setup
     tournament = @tournament_service.current_tournament
     return nil if tournament.blank?
+
+    unless scheduled_time?(tournament)
+      Rails.logger.info "LeaderboardImportJob skipped: Not a scheduled run time " \
+                        "(tournament tz: #{tournament_timezone(tournament)})"
+      return nil
+    end
 
     api_data = RapidApi::LeaderboardClient.new.fetch(tournament.tournament_id)
     return nil if api_data.blank?
@@ -136,5 +144,20 @@ class LeaderboardImportJob < ApplicationJob
     else
       value.to_i
     end
+  end
+
+  def scheduled_time?(tournament)
+    tz = tournament_timezone(tournament)
+    local_time = Time.current.in_time_zone(tz)
+    TARGET_TIMES.any? { |hour, min| local_time.hour == hour && local_time.min == min }
+  end
+
+  def tournament_timezone(tournament)
+    tz = tournament.time_zone.presence
+    return "America/New_York" if tz.blank?
+
+    ActiveSupport::TimeZone[tz] ? tz : "America/New_York"
+  rescue StandardError
+    "America/New_York"
   end
 end
