@@ -175,6 +175,111 @@ RSpec.describe Importers::LeaderboardImporter do
       expect(scores.find_by(round: 3).score).to eq(69)
       expect(scores.find_by(round: 4).score).to eq(68)
     end
+
+    it "saves score when roundComplete is true but round not yet in rounds array (API lag)" do
+      match_pick
+
+      lag_window_data = {
+        "leaderboardRows" => [
+          {
+            "playerId" => "46046",
+            "firstName" => "Scottie",
+            "lastName" => "Scheffler",
+            "status" => "active",
+            "roundComplete" => true,
+            "currentRound" => { "$numberInt" => "2" },
+            "currentRoundScore" => "-4",
+            "thru" => "F",
+            "rounds" => [
+              { "roundId" => { "$numberInt" => "1" }, "strokes" => { "$numberInt" => "70" } }
+              # Round 2 not yet in rounds array — API lag window
+            ]
+          }
+        ]
+      }
+
+      described_class.new(lag_window_data, tournament).process
+
+      scores = Score.where(match_pick: match_pick).order(:round)
+      expect(scores.count).to eq(2)
+      expect(scores.find_by(round: 1).score).to eq(70)
+      expect(scores.find_by(round: 2).score).to eq(tournament.par - 4)
+    end
+
+    it "continues updating second golfer scores after first golfer finishes their round" do
+      scheffler_pick = match_pick
+
+      mcilroy = create(:golfer, source_id: "28237", f_name: "Rory", l_name: "McIlroy")
+      mcilroy_pick = create(:match_pick, user: user, tournament: tournament, golfer: mcilroy, drafted: true)
+
+      data = {
+        "leaderboardRows" => [
+          {
+            "playerId" => "46046",
+            "status" => "complete",
+            "roundComplete" => true,
+            "currentRound" => { "$numberInt" => "2" },
+            "currentRoundScore" => "-3",
+            "thru" => "F",
+            "rounds" => [
+              { "roundId" => { "$numberInt" => "1" }, "strokes" => { "$numberInt" => "70" } },
+              { "roundId" => { "$numberInt" => "2" }, "strokes" => { "$numberInt" => "69" } }
+            ]
+          },
+          {
+            "playerId" => "28237",
+            "status" => "active",
+            "roundComplete" => false,
+            "currentRound" => { "$numberInt" => "2" },
+            "currentRoundScore" => "-2",
+            "thru" => "12",
+            "rounds" => [
+              { "roundId" => { "$numberInt" => "1" }, "strokes" => { "$numberInt" => "71" } }
+            ]
+          }
+        ]
+      }
+
+      described_class.new(data, tournament).process
+
+      mcilroy_r2 = Score.find_by(match_pick: mcilroy_pick, round: 2)
+      expect(mcilroy_r2).to be_present
+      expect(mcilroy_r2.score).to eq(tournament.par - 2)
+
+      # Second import: McIlroy's score improves
+      data["leaderboardRows"][1]["currentRoundScore"] = "-4"
+      data["leaderboardRows"][1]["thru"] = "16"
+
+      described_class.new(data, tournament).process
+
+      expect(mcilroy_r2.reload.score).to eq(tournament.par - 4)
+    end
+
+    it "does not save a bogus score when currentRoundScore is the placeholder dash" do
+      match_pick
+
+      no_score_data = {
+        "leaderboardRows" => [
+          {
+            "playerId" => "46046",
+            "status" => "active",
+            "roundComplete" => false,
+            "currentRound" => { "$numberInt" => "2" },
+            "currentRoundScore" => "-",
+            "thru" => "-",
+            "rounds" => [
+              { "roundId" => { "$numberInt" => "1" }, "strokes" => { "$numberInt" => "70" } }
+            ]
+          }
+        ]
+      }
+
+      described_class.new(no_score_data, tournament).process
+
+      scores = Score.where(match_pick: match_pick).order(:round)
+      expect(scores.count).to eq(1)
+      expect(scores.find_by(round: 2)).to be_nil
+    end
   end
 
   describe "#determine_current_round" do
