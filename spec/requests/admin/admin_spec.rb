@@ -322,6 +322,82 @@ RSpec.describe "Admin API", type: :request do
     end
   end
 
+  describe "Scores filters" do
+    let!(:user_a) { create(:user) }
+    let!(:user_b) { create(:user) }
+    let!(:tournament_x) { create(:tournament) }
+    let!(:tournament_y) { create(:tournament) }
+    let!(:golfer) { create(:golfer) }
+    let!(:pick_a_x) { create(:match_pick, user: user_a, tournament: tournament_x, golfer: golfer, priority: 1) }
+    let!(:pick_b_y) { create(:match_pick, user: user_b, tournament: tournament_y, golfer: golfer, priority: 1) }
+    let!(:score_a_x) { create(:score, match_pick: pick_a_x) }
+    let!(:score_b_y) { create(:score, match_pick: pick_b_y) }
+
+    it "returns all scores when no filters applied" do
+      get "/admin/table/scores", headers: admin_headers
+
+      json = JSON.parse(response.body)
+      expect(json["data"].length).to be >= 2
+    end
+
+    it "filters scores by user_id" do
+      get "/admin/table/scores", params: { user_id: user_a.id }, headers: admin_headers
+
+      json = JSON.parse(response.body)
+      returned_ids = json["data"].map { |r| r["id"] }
+      expect(returned_ids).to include(score_a_x.id)
+      expect(returned_ids).not_to include(score_b_y.id)
+    end
+
+    it "filters scores by tournament_id" do
+      get "/admin/table/scores", params: { tournament_id: tournament_y.id }, headers: admin_headers
+
+      json = JSON.parse(response.body)
+      returned_ids = json["data"].map { |r| r["id"] }
+      expect(returned_ids).to include(score_b_y.id)
+      expect(returned_ids).not_to include(score_a_x.id)
+    end
+
+    it "filters scores by both user_id and tournament_id" do
+      get "/admin/table/scores", params: { user_id: user_a.id, tournament_id: tournament_x.id }, headers: admin_headers
+
+      json = JSON.parse(response.body)
+      returned_ids = json["data"].map { |r| r["id"] }
+      expect(returned_ids).to include(score_a_x.id)
+      expect(returned_ids).not_to include(score_b_y.id)
+    end
+
+    it "sorts by created_at with user_id filter without SQL ambiguity" do
+      expect {
+        get "/admin/table/scores",
+            params: { user_id: user_a.id, sort_by: "created_at", sort_direction: "asc" },
+            headers: admin_headers
+      }.not_to raise_error
+
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "sorts by updated_at with tournament_id filter without SQL ambiguity" do
+      expect {
+        get "/admin/table/scores",
+            params: { tournament_id: tournament_x.id, sort_by: "updated_at", sort_direction: "desc" },
+            headers: admin_headers
+      }.not_to raise_error
+
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "includes users and tournaments in lookups" do
+      get "/admin/table/scores", headers: admin_headers
+
+      json = JSON.parse(response.body)
+      expect(json["lookups"]).to have_key("users")
+      expect(json["lookups"]).to have_key("tournaments")
+      expect(json["lookups"]["users"]).to be_an(Array)
+      expect(json["lookups"]["tournaments"]).to be_an(Array)
+    end
+  end
+
   describe "Cross-table operations" do
     context "when working with related records" do
       let(:user) { create(:user) }
