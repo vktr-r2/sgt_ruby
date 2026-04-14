@@ -32,10 +32,27 @@ class Admin::AdminController < ApplicationController
       records = records.where(golfer_id: params[:golfer_id]) if params[:golfer_id].present?
     end
 
+    # Apply filters for scores (joins required: Score → MatchPick → User/Tournament)
+    if table_name == "scores"
+      if params[:user_id].present? || params[:tournament_id].present?
+        join_associations = []
+        join_associations << :user if params[:user_id].present?
+        join_associations << :tournament if params[:tournament_id].present?
+        records = records.joins(match_pick: join_associations)
+        records = records.where(users: { id: params[:user_id] }) if params[:user_id].present?
+        records = records.where(tournaments: { id: params[:tournament_id] }) if params[:tournament_id].present?
+      end
+    end
+
     # Apply sorting
     if params[:sort_by].present? && model.column_names.include?(params[:sort_by])
       direction = params[:sort_direction] == "desc" ? :desc : :asc
-      records = records.order(params[:sort_by] => direction)
+      if table_name == "scores"
+        # Qualify column to avoid ambiguity when joins to users/tournaments are active
+        records = records.order(Arel.sql("scores.#{params[:sort_by]} #{direction}"))
+      else
+        records = records.order(params[:sort_by] => direction)
+      end
     end
 
     render json: {
@@ -161,6 +178,8 @@ class Admin::AdminController < ApplicationController
       lookups[:match_picks] = MatchPick.includes(:user, :golfer).map do |mp|
         { id: mp.id, name: "#{mp.user&.name} - #{mp.golfer&.f_name} #{mp.golfer&.l_name}" }
       end
+      lookups[:users] = User.all.map { |u| { id: u.id, name: u.name } }
+      lookups[:tournaments] = Tournament.all.map { |t| { id: t.id, name: t.name } }
     end
 
     lookups
