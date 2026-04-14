@@ -76,6 +76,26 @@ RSpec.describe Api::TournamentResultsService do
         expect(first_golfer).to have_key(:final_position)
         expect(first_golfer).to have_key(:status)
         expect(first_golfer).to have_key(:was_replaced)
+        expect(first_golfer).to have_key(:rounds)
+      end
+
+      it "includes round-by-round scores for each golfer" do
+        result = described_class.call(tournament.id)
+
+        first_golfer = result[:results].first[:golfers].first
+        rounds = first_golfer[:rounds]
+
+        expect(rounds).to be_an(Array)
+        expect(rounds.length).to eq(4)
+        expect(rounds.first).to include(round: 1, score: 70)
+        expect(rounds.map { |r| r[:round] }).to eq([ 1, 2, 3, 4 ])
+      end
+
+      it "includes par in tournament data" do
+        result = described_class.call(tournament.id)
+
+        expect(result[:tournament]).to have_key(:par)
+        expect(result[:tournament][:par]).to eq(tournament.par)
       end
     end
 
