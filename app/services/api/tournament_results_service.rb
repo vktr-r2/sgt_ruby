@@ -31,6 +31,7 @@ module Api
       {
         id: tournament.id,
         name: tournament.name,
+        par: tournament.par,
         start_date: tournament.start_date.to_s,
         end_date: tournament.end_date.to_s,
         is_major: tournament.major_championship
@@ -69,7 +70,8 @@ module Api
         total_score: pick.scores.sum(:score),
         final_position: final_score&.position,
         status: final_score&.status || "complete",
-        was_replaced: pick.original_golfer_id.present?
+        was_replaced: pick.original_golfer_id.present?,
+        rounds: pick.scores.order(:round).map { |s| { round: s.round, score: s.score } }
       }
     end
   end
