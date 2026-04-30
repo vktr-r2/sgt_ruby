@@ -9,7 +9,7 @@ module Api
         user.ensure_authentication_token!
         render_success({
           user: user_data(user),
-          token: user.authentication_token
+          token: user.plain_token
         })
       else
         render_error("Invalid credentials", :unauthorized)
@@ -23,7 +23,7 @@ module Api
         user.ensure_authentication_token!
         render_success({
           user: user_data(user),
-          token: user.authentication_token
+          token: user.plain_token
         })
       else
         render_error(user.errors.full_messages.join(", "), :unprocessable_entity)

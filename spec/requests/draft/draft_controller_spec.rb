@@ -4,7 +4,7 @@ RSpec.describe 'Draft::DraftController', type: :request do
   let(:user) { create(:user, :with_token) }
   let(:tournament) { create(:tournament) }
   let(:golfers) { create_list(:golfer, 10, last_active_tourney: tournament.unique_id) }
-  let(:auth_headers) { { 'Authorization' => "Bearer #{user.authentication_token}" } }
+  let(:auth_headers) { { 'Authorization' => "Bearer #{user.plain_token}" } }
 
   before do
     allow_any_instance_of(BusinessLogic::TournamentService)
@@ -516,7 +516,7 @@ RSpec.describe 'Draft::DraftController', type: :request do
 
     context 'with different users' do
       let(:other_user) { create(:user, :with_token) }
-      let(:other_auth_headers) { { 'Authorization' => "Bearer #{other_user.authentication_token}" } }
+      let(:other_auth_headers) { { 'Authorization' => "Bearer #{other_user.plain_token}" } }
 
       it 'creates picks for the correct user' do
         post '/draft/submit', params: { picks: valid_picks }, headers: auth_headers, as: :json

@@ -8,8 +8,8 @@ RSpec.describe "Admin Password Reset Link Generation", type: :request do
   let!(:admin_user) { create(:user, :admin, :with_token) }
   let!(:regular_user) { create(:user, :with_token) }
   let!(:target_user) { create(:user, name: "John Smith", email: "john@example.com") }
-  let(:admin_headers) { { "Authorization" => "Bearer #{admin_user.authentication_token}" } }
-  let(:regular_headers) { { "Authorization" => "Bearer #{regular_user.authentication_token}" } }
+  let(:admin_headers) { { "Authorization" => "Bearer #{admin_user.plain_token}" } }
+  let(:regular_headers) { { "Authorization" => "Bearer #{regular_user.plain_token}" } }
 
   describe "POST /admin/users/:user_id/generate_reset_link" do
     context "when admin generates reset link" do

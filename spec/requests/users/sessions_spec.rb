@@ -34,9 +34,9 @@ RSpec.describe 'Users::Sessions', type: :request do
         expect(json_response['token']).to be_present
         expect(json_response['token'].length).to eq(20)
 
-        # Verify token is saved to user
+        # Verify DB stores the hash of the returned plain token
         user.reload
-        expect(user.authentication_token).to eq(json_response['token'])
+        expect(user.authentication_token).to eq(Digest::SHA256.hexdigest(json_response['token']))
       end
 
       it 'resets failed attempts on successful login' do
@@ -172,11 +172,11 @@ RSpec.describe 'Users::Sessions', type: :request do
   describe 'DELETE /users/sign_out' do
     context 'with valid authentication token' do
       let!(:user_with_token) { create(:user, :with_token) }
-      let(:token) { user_with_token.authentication_token }
+      let(:token) { user_with_token.plain_token }
       let(:auth_headers) { { 'Authorization' => "Bearer #{token}" } }
 
       it 'successfully logs out user and invalidates token' do
-        expect(user_with_token.authentication_token).to be_present # Verify token exists
+        expect(user_with_token.authentication_token).to be_present # Verify hash is stored
 
         delete '/users/sign_out', headers: auth_headers
 

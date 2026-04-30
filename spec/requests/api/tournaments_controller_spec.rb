@@ -2,7 +2,7 @@ require "rails_helper"
 
 RSpec.describe "Api::TournamentsController", type: :request do
   let(:user) { create(:user, :with_token) }
-  let(:headers) { { "Authorization" => "Bearer #{user.authentication_token}" } }
+  let(:headers) { { "Authorization" => "Bearer #{user.plain_token}" } }
 
   describe "GET /api/tournaments/current/scores" do
     context "with authentication" do

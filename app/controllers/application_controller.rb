@@ -11,7 +11,7 @@ class ApplicationController < ActionController::API
     token = request.headers["Authorization"]&.split(" ")&.last
     return render json: { error: "Unauthorized" }, status: :unauthorized unless token
 
-    @current_user = User.find_by(authentication_token: token)
+    @current_user = User.find_by_token(token)
     render json: { error: "Unauthorized" }, status: :unauthorized unless @current_user
   end
 

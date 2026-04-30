@@ -84,7 +84,7 @@ RSpec.describe 'Rack::Attack', type: :request do
 
   describe 'API throttling' do
     let(:user) { create(:user, :with_token) }
-    let(:headers) { { 'Authorization' => "Bearer #{user.authentication_token}" } }
+    let(:headers) { { 'Authorization' => "Bearer #{user.plain_token}" } }
 
     it 'allows 100 API requests per minute' do
       100.times do

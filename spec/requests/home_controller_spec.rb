@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe 'HomeController', type: :request do
   let(:user) { create(:user, :with_token) }
-  let(:auth_headers) { { 'Authorization' => "Bearer #{user.authentication_token}" } }
+  let(:auth_headers) { { 'Authorization' => "Bearer #{user.plain_token}" } }
 
   describe 'GET /' do
     context 'when there is a current tournament' do

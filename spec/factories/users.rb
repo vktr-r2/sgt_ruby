@@ -14,6 +14,7 @@ FactoryBot.define do
 
     trait :with_token do
       after(:create) do |user|
+        # plain_token is available on the user object after this call
         user.ensure_authentication_token!
       end
     end

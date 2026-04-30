@@ -15,7 +15,7 @@ class Users::RegistrationsController < Devise::RegistrationsController
           name: user.name,
           admin: user.admin
         },
-        token: user.authentication_token
+        token: user.plain_token
       }, status: :created
     else
       render json: { error: user.errors.full_messages.join(", ") }, status: :unprocessable_entity

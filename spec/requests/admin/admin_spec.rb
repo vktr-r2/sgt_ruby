@@ -4,8 +4,8 @@ RSpec.describe "Admin API", type: :request do
   include ActiveSupport::Testing::TimeHelpers
   let!(:admin_user) { create(:user, :admin, :with_token) }
   let!(:regular_user) { create(:user, :with_token) }
-  let(:admin_headers) { { 'Authorization' => "Bearer #{admin_user.authentication_token}" } }
-  let(:regular_headers) { { 'Authorization' => "Bearer #{regular_user.authentication_token}" } }
+  let(:admin_headers) { { 'Authorization' => "Bearer #{admin_user.plain_token}" } }
+  let(:regular_headers) { { 'Authorization' => "Bearer #{regular_user.plain_token}" } }
 
   describe "Authentication & Authorization" do
     context "when user is not authenticated" do

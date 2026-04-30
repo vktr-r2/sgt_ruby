@@ -35,7 +35,7 @@ class Users::SessionsController < ApplicationController
           name: user.name,
           admin: user.admin
         },
-        token: user.authentication_token
+        token: user.plain_token
       }
     else
       # Increment failed attempts (if user exists)
@@ -51,10 +51,10 @@ class Users::SessionsController < ApplicationController
 
   def destroy
     token = request.headers["Authorization"]&.split(" ")&.last
-    user = User.find_by(authentication_token: token)
+    user = User.find_by_token(token)
 
     if user
-      user.update_column(:authentication_token, nil)  # Use update_column to bypass callbacks
+      user.update_column(:authentication_token, nil)
       render json: { message: "Signed out successfully" }
     else
       render json: { error: "Not signed in" }, status: :unauthorized

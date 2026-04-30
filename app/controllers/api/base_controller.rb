@@ -8,7 +8,7 @@ module Api
       token = request.headers["Authorization"]&.sub(/^Bearer /, "")
 
       if token.present?
-        @current_api_user = User.find_by(authentication_token: token)
+        @current_api_user = User.find_by_token(token)
         render_error("Invalid token", :unauthorized) unless @current_api_user
       else
         render_error("Authorization token required", :unauthorized)
