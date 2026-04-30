@@ -259,15 +259,6 @@ reload!
 
 ---
 
-## Security Features
-
-- Account lockout after 5 failed login attempts (15 minute cooldown)
-- Rate limiting: 5 login attempts per 15 minutes, 100 API calls per minute
-- Security headers: X-Frame-Options, X-XSS-Protection, X-Content-Type-Options
-- Bearer token authentication via Devise
-
----
-
 ## License
 
 Private project - All rights reserved.
