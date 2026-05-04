@@ -53,6 +53,40 @@ RSpec.describe User, type: :model do
       end
     end
 
+    describe "#rotate_authentication_token!" do
+      it "generates a token when none exists" do
+        user = create(:user)
+        user.rotate_authentication_token!
+        expect(user.plain_token).to be_present
+        expect(user.plain_token.length).to eq(20)
+      end
+
+      it "replaces an existing token with a new one" do
+        user = create(:user)
+        user.ensure_authentication_token!
+        original_hash = user.authentication_token
+
+        user.rotate_authentication_token!
+
+        expect(user.plain_token).to be_present
+        user.reload
+        expect(user.authentication_token).not_to eq(original_hash)
+        expect(user.authentication_token).to eq(Digest::SHA256.hexdigest(user.plain_token))
+      end
+
+      it "always sets plain_token even on a freshly loaded instance" do
+        user = create(:user)
+        user.ensure_authentication_token!
+
+        # Fresh DB load: @plain_token ivar is not set
+        fresh = User.find(user.id)
+        expect(fresh.plain_token).to be_nil
+
+        fresh.rotate_authentication_token!
+        expect(fresh.plain_token).to be_present
+      end
+    end
+
     describe ".find_by_token" do
       it "finds a user by their plain token" do
         user = create(:user)

@@ -20,9 +20,17 @@ class User < ApplicationRecord
   # after ensure_authentication_token! is called; nil on any subsequent reload.
   attr_reader :plain_token
 
+  # Clears any existing token and generates a fresh one. Always call this on
+  # login so a stale DB token never silences plain_token.
+  def rotate_authentication_token!
+    update_column(:authentication_token, nil) if authentication_token.present?
+    ensure_authentication_token!
+  end
+
   # Generates a plain token, stores its SHA-256 hash in the DB, and exposes
   # the plain token via #plain_token for the duration of this object's lifetime.
-  # No-op if a token hash is already stored.
+  # No-op if a token hash is already stored. Use rotate_authentication_token!
+  # on login to always get a fresh token.
   def ensure_authentication_token!
     return if authentication_token.present?
 

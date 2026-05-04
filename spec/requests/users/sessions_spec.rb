@@ -59,6 +59,24 @@ RSpec.describe 'Users::Sessions', type: :request do
         expect(user.current_sign_in_ip).to be_present
       end
 
+      it 'issues a fresh token even when an existing token is already stored' do
+        # Simulate a stale DB token (e.g. logout failed at network level)
+        user.ensure_authentication_token!
+        stale_hash = user.authentication_token
+        expect(stale_hash).to be_present
+
+        post '/users/sign_in', params: login_params, as: :json
+
+        expect(response).to have_http_status(:ok)
+        json_response = JSON.parse(response.body)
+        expect(json_response['token']).to be_present
+
+        user.reload
+        # Hash must have rotated
+        expect(user.authentication_token).not_to eq(stale_hash)
+        expect(user.authentication_token).to eq(Digest::SHA256.hexdigest(json_response['token']))
+      end
+
       it 'updates last sign in on subsequent logins' do
         # First login
         post '/users/sign_in', params: login_params, as: :json
