@@ -36,6 +36,20 @@ RSpec.describe BusinessLogic::TournamentService do
       end
     end
 
+    context 'when the current-week tournament is concluded' do
+      let!(:concluded_tournament) do
+        create(:tournament,
+               week_number: test_date.strftime("%V").to_i,
+               year: test_date.year,
+               concluded: true,
+               name: 'Concluded Tournament')
+      end
+
+      it 'returns nil (concluded tournaments are not "current")' do
+        expect(service.current_tournament).to be_nil
+      end
+    end
+
     context 'with multiple tournaments for the current week' do
       let!(:regular_tournament) do
         create(:tournament,
@@ -194,13 +208,14 @@ RSpec.describe BusinessLogic::TournamentService do
       end
     end
 
-    context 'with a recently ended tournament that has match_results' do
+    context 'with a recently concluded tournament that has match_results' do
       let!(:completed_tournament) do
         create(:tournament,
                week_number: test_date.strftime("%V").to_i - 1,
                year: test_date.year,
                start_date: test_date - 6.days,
                end_date: test_date - 2.days,
+               concluded: true,
                name: 'Last Week Tournament')
       end
 
@@ -208,33 +223,51 @@ RSpec.describe BusinessLogic::TournamentService do
         create(:match_result, tournament: completed_tournament, user: create(:user), place: 1)
       end
 
-      it 'returns the most recently ended tournament' do
+      it 'returns the most recently concluded tournament' do
         expect(service.recently_completed_tournament).to eq(completed_tournament)
       end
     end
 
-    context 'with an ended tournament that has no match_results yet' do
+    context 'with an ended tournament that has no match_results yet but is concluded' do
       let!(:completed_without_results) do
         create(:tournament,
                week_number: test_date.strftime("%V").to_i - 1,
                year: test_date.year,
                start_date: test_date - 6.days,
                end_date: test_date - 2.days,
+               concluded: true,
                name: 'Tournament Without Results')
       end
 
-      it 'returns the tournament even without match_results (transition shows immediately)' do
+      it 'returns the tournament (transition shows immediately after conclusion)' do
         expect(service.recently_completed_tournament).to eq(completed_without_results)
       end
     end
 
-    context 'when the only ended tournament is from a prior year' do
+    context 'with an ended tournament that is not yet concluded' do
+      let!(:not_concluded) do
+        create(:tournament,
+               week_number: test_date.strftime("%V").to_i - 1,
+               year: test_date.year,
+               start_date: test_date - 6.days,
+               end_date: test_date - 2.days,
+               concluded: false,
+               name: 'Not Yet Concluded')
+      end
+
+      it 'returns nil (transition state only starts after concluded flag is set)' do
+        expect(service.recently_completed_tournament).to be_nil
+      end
+    end
+
+    context 'when the only concluded tournament is from a prior year' do
       let!(:prior_year_tournament) do
         create(:tournament,
                week_number: 50,
                year: test_date.year - 1,
                start_date: Date.new(test_date.year - 1, 12, 10),
                end_date: Date.new(test_date.year - 1, 12, 13),
+               concluded: true,
                name: 'Last Year Tournament')
       end
 
