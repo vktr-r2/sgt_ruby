@@ -24,7 +24,7 @@ module Api
     private
 
     def completed?(tournament)
-      tournament.end_date < Date.current
+      tournament.concluded? || tournament.end_date.to_date < Date.current
     end
 
     def tournament_data(tournament)

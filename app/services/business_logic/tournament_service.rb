@@ -48,10 +48,9 @@ module BusinessLogic
       # Guard: if a current tournament exists, we are not in the transition period
       return nil if current_tournament.present?
 
-      # Return the most recently ended tournament for this year
-      # (regardless of whether match results have been calculated yet)
+      # Return the most recently concluded tournament for this year
       Tournament.where(year: @date.year)
-                .where("end_date < ?", @date)
+                .where(concluded: true)
                 .order(end_date: :desc)
                 .first
     end
@@ -87,7 +86,8 @@ module BusinessLogic
     def fetch_current_tournaments
       Tournament.where(
         week_number: current_week,
-        year: @date.year
+        year: @date.year,
+        concluded: false
       )
     end
 
