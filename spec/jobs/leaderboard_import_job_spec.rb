@@ -208,6 +208,89 @@ RSpec.describe LeaderboardImportJob, type: :job do
     end
   end
 
+  describe "match results trigger" do
+    include ActiveSupport::Testing::TimeHelpers
+
+    before { ActiveJob::Base.queue_adapter = :test }
+    after  { ActiveJob::Base.queue_adapter = :async }
+
+    let(:end_date_tournament) do
+      create(:tournament,
+             tournament_id: "500",
+             name: "Trigger Tournament",
+             end_date: Date.new(2026, 6, 7),
+             concluded: false)
+    end
+
+    before do
+      tournament_service_double = instance_double(BusinessLogic::TournamentService)
+      allow(BusinessLogic::TournamentService).to receive(:new).and_return(tournament_service_double)
+      allow(tournament_service_double).to receive(:current_tournament).and_return(end_date_tournament)
+
+      allow(leaderboard_client).to receive(:fetch).with(end_date_tournament.tournament_id).and_return(api_data)
+      allow(Importers::LeaderboardImporter).to receive(:new).with(api_data, end_date_tournament).and_return(leaderboard_importer)
+      allow_any_instance_of(described_class).to receive(:scheduled_time?).and_return(true)
+    end
+
+    context "at 8PM on the tournament end_date" do
+      it "enqueues MatchResultsJob" do
+        travel_to Time.find_zone("America/New_York").local(2026, 6, 7, 20, 0, 0) do
+          expect { described_class.perform_now }.to have_enqueued_job(MatchResultsJob).with(end_date_tournament.id)
+        end
+      end
+    end
+
+    context "at 10AM on the tournament end_date (not final update)" do
+      it "does not enqueue MatchResultsJob" do
+        travel_to Time.find_zone("America/New_York").local(2026, 6, 7, 10, 0, 0) do
+          expect { described_class.perform_now }.not_to have_enqueued_job(MatchResultsJob)
+        end
+      end
+    end
+
+    context "on a day after the tournament end_date (any time)" do
+      it "enqueues MatchResultsJob regardless of target time" do
+        travel_to Time.find_zone("America/New_York").local(2026, 6, 8, 10, 0, 0) do
+          expect { described_class.perform_now }.to have_enqueued_job(MatchResultsJob).with(end_date_tournament.id)
+        end
+      end
+    end
+
+    context "when tournament is already concluded" do
+      before { end_date_tournament.update_column(:concluded, true) }
+
+      it "does not enqueue MatchResultsJob again" do
+        travel_to Time.find_zone("America/New_York").local(2026, 6, 7, 20, 0, 0) do
+          expect { described_class.perform_now }.not_to have_enqueued_job(MatchResultsJob)
+        end
+      end
+    end
+
+    context "before the tournament end_date" do
+      let(:future_end_tournament) do
+        create(:tournament,
+               tournament_id: "501",
+               name: "Mid Tournament",
+               end_date: Date.new(2026, 6, 10),
+               concluded: false)
+      end
+
+      before do
+        tournament_service_double = instance_double(BusinessLogic::TournamentService)
+        allow(BusinessLogic::TournamentService).to receive(:new).and_return(tournament_service_double)
+        allow(tournament_service_double).to receive(:current_tournament).and_return(future_end_tournament)
+        allow(leaderboard_client).to receive(:fetch).with(future_end_tournament.tournament_id).and_return(api_data)
+        allow(Importers::LeaderboardImporter).to receive(:new).with(api_data, future_end_tournament).and_return(leaderboard_importer)
+      end
+
+      it "does not enqueue MatchResultsJob mid-tournament" do
+        travel_to Time.find_zone("America/New_York").local(2026, 6, 8, 20, 0, 0) do
+          expect { described_class.perform_now }.not_to have_enqueued_job(MatchResultsJob)
+        end
+      end
+    end
+  end
+
   describe "timezone-aware scheduling" do
     include ActiveSupport::Testing::TimeHelpers
 

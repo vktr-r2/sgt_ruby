@@ -33,4 +33,8 @@ class Tournament < ApplicationRecord
   def self.any_in_progress?(current_date = Date.current)
     where("DATE(start_date) <= ? AND DATE(end_date) >= ?", current_date, current_date).exists?
   end
+
+  def concluded?
+    concluded
+  end
 end
