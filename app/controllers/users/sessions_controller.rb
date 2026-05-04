@@ -27,7 +27,7 @@ class Users::SessionsController < ApplicationController
       user.sign_in_count += 1
       user.save!
 
-      user.ensure_authentication_token!
+      user.rotate_authentication_token!
       render json: {
         user: {
           id: user.id,

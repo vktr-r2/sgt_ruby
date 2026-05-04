@@ -6,7 +6,7 @@ module Api
       user = User.find_by(email: params[:email])
 
       if user&.valid_password?(params[:password])
-        user.ensure_authentication_token!
+        user.rotate_authentication_token!
         render_success({
           user: user_data(user),
           token: user.plain_token
