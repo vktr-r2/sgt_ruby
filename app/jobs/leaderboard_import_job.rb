@@ -29,6 +29,9 @@ class LeaderboardImportJob < ApplicationJob
 
     # Save full leaderboard snapshot for display
     save_leaderboard_snapshot(tournament, api_data)
+
+    # Trigger match results if this is the final scheduled update for the tournament
+    trigger_match_results_if_final(tournament)
   end
 
   def setup
@@ -36,6 +39,28 @@ class LeaderboardImportJob < ApplicationJob
   end
 
   private
+
+  def trigger_match_results_if_final(tournament)
+    return if tournament.concluded?
+
+    today = Date.current
+    tournament_end = tournament.end_date.to_date
+
+    tz = tournament_timezone(tournament)
+    local_time = Time.current.in_time_zone(tz)
+    is_final_update = local_time.hour == 20 && local_time.min == 0
+    is_past_end = today > tournament_end
+
+    return unless is_final_update || is_past_end
+
+    # On end_date the 8PM update fires — on post-end days any run triggers
+    return unless today >= tournament_end
+
+    Rails.logger.info "Triggering MatchResultsJob for #{tournament.name} (post-tournament update)"
+    MatchResultsJob.perform_later(tournament.id)
+  rescue StandardError => e
+    Rails.logger.error "Failed to trigger MatchResultsJob: #{e.message}"
+  end
 
   def save_leaderboard_snapshot(tournament, api_data)
     return unless api_data["leaderboardRows"].present?

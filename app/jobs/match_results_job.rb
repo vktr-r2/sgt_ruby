@@ -1,10 +1,9 @@
 class MatchResultsJob < ApplicationJob
   queue_as :default
 
-  def perform
+  def perform(tournament_id = nil)
     setup
-    # Get previous tournament (tournament that just completed)
-    tournament = @tournament_service.previous_tournament
+    tournament = find_tournament(tournament_id)
 
     return nil if tournament.blank?
 
@@ -13,15 +12,23 @@ class MatchResultsJob < ApplicationJob
       return nil
     end
 
-    # Calculate and store match results
     BusinessLogic::MatchResultsCalculationService.new(tournament).calculate
-    Rails.logger.info "Match results calculated successfully for #{tournament.name}"
+    tournament.update_column(:concluded, true)
+    Rails.logger.info "Match results calculated and tournament concluded: #{tournament.name}"
   rescue StandardError => e
     Rails.logger.error "MatchResultsJob failed for tournament #{tournament&.name}: #{e.message}"
     raise
   end
 
+  private
+
   def setup
     @tournament_service = BusinessLogic::TournamentService.new
+  end
+
+  def find_tournament(tournament_id)
+    return Tournament.find(tournament_id) if tournament_id.present?
+
+    @tournament_service.previous_tournament
   end
 end
