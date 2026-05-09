@@ -20,36 +20,42 @@ class User < ApplicationRecord
   # after ensure_authentication_token! is called; nil on any subsequent reload.
   attr_reader :plain_token
 
+  TOKEN_TTL = 2.weeks
+
   # Clears any existing token and generates a fresh one. Always call this on
   # login so a stale DB token never silences plain_token.
   def rotate_authentication_token!
-    update_column(:authentication_token, nil) if authentication_token.present?
+    update_columns(authentication_token: nil, token_expires_at: nil) if authentication_token.present?
     ensure_authentication_token!
   end
 
-  # Generates a plain token, stores its SHA-256 hash in the DB, and exposes
-  # the plain token via #plain_token for the duration of this object's lifetime.
-  # No-op if a token hash is already stored. Use rotate_authentication_token!
-  # on login to always get a fresh token.
+  # Generates a plain token, stores its SHA-256 hash in the DB, sets a 2-week
+  # expiry, and exposes the plain token via #plain_token for the duration of
+  # this object's lifetime. No-op if a valid unexpired token is already stored.
   def ensure_authentication_token!
-    return if authentication_token.present?
+    return if authentication_token.present? && token_expires_at&.future?
 
     loop do
       plain = Devise.friendly_token
       hashed = Digest::SHA256.hexdigest(plain)
       next if User.where.not(id: id).exists?(authentication_token: hashed)
 
-      update_column(:authentication_token, hashed)
+      update_columns(authentication_token: hashed, token_expires_at: TOKEN_TTL.from_now)
       @plain_token = plain
       break
     end
   end
 
-  # Looks up a user by hashing the incoming bearer token and comparing to stored hash.
+  # Looks up a user by hashing the incoming bearer token, checking expiry.
+  # Returns nil for blank, unknown, or expired tokens.
   def self.find_by_token(token)
     return nil if token.blank?
 
-    find_by(authentication_token: Digest::SHA256.hexdigest(token))
+    user = find_by(authentication_token: Digest::SHA256.hexdigest(token))
+    return nil if user.nil?
+    return nil if user.token_expires_at.nil? || user.token_expires_at.past?
+
+    user
   end
 
   private
