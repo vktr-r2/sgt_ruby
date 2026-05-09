@@ -33,13 +33,30 @@ RSpec.describe User, type: :model do
         expect(user.authentication_token).to eq(Digest::SHA256.hexdigest(user.plain_token))
       end
 
-      it "is a no-op when a token hash is already stored" do
+      it "sets token_expires_at to 2 weeks from now" do
+        user = create(:user)
+        user.ensure_authentication_token!
+        expect(user.token_expires_at).to be_within(5.seconds).of(2.weeks.from_now)
+      end
+
+      it "is a no-op when a valid unexpired token is already stored" do
         user = create(:user)
         user.ensure_authentication_token!
         original_hash = user.authentication_token
 
         user.ensure_authentication_token!
         expect(user.authentication_token).to eq(original_hash)
+      end
+
+      it "regenerates when token is expired" do
+        user = create(:user)
+        user.ensure_authentication_token!
+        original_hash = user.authentication_token
+        user.update_column(:token_expires_at, 1.minute.ago)
+
+        user.ensure_authentication_token!
+        expect(user.authentication_token).not_to eq(original_hash)
+        expect(user.token_expires_at).to be_within(5.seconds).of(2.weeks.from_now)
       end
 
       it "generates unique hashes for different users" do
@@ -74,6 +91,15 @@ RSpec.describe User, type: :model do
         expect(user.authentication_token).to eq(Digest::SHA256.hexdigest(user.plain_token))
       end
 
+      it "resets token_expires_at to 2 weeks from now" do
+        user = create(:user)
+        user.ensure_authentication_token!
+        user.update_column(:token_expires_at, 1.day.from_now)
+
+        user.rotate_authentication_token!
+        expect(user.token_expires_at).to be_within(5.seconds).of(2.weeks.from_now)
+      end
+
       it "always sets plain_token even on a freshly loaded instance" do
         user = create(:user)
         user.ensure_authentication_token!
@@ -103,6 +129,30 @@ RSpec.describe User, type: :model do
       it "returns nil for a blank token" do
         expect(User.find_by_token(nil)).to be_nil
         expect(User.find_by_token("")).to be_nil
+      end
+
+      it "returns nil for an expired token" do
+        user = create(:user)
+        user.ensure_authentication_token!
+        user.update_column(:token_expires_at, 1.minute.ago)
+
+        expect(User.find_by_token(user.plain_token)).to be_nil
+      end
+
+      it "returns nil when token_expires_at is nil" do
+        user = create(:user)
+        user.ensure_authentication_token!
+        user.update_columns(token_expires_at: nil)
+
+        expect(User.find_by_token(user.plain_token)).to be_nil
+      end
+
+      it "returns the user when token is not yet expired" do
+        user = create(:user)
+        user.ensure_authentication_token!
+        user.update_column(:token_expires_at, 13.days.from_now)
+
+        expect(User.find_by_token(user.plain_token)).to eq(user)
       end
     end
 
