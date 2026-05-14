@@ -29,11 +29,11 @@ class User < ApplicationRecord
     ensure_authentication_token!
   end
 
-  # Generates a plain token, stores its SHA-256 hash in the DB, sets a 2-week
-  # expiry, and exposes the plain token via #plain_token for the duration of
-  # this object's lifetime. No-op if a valid unexpired token is already stored.
+  # Generates a plain token, stores its SHA-256 hash and a 2-week expiry in
+  # the DB, and exposes the plain token via #plain_token for the duration of
+  # this object's lifetime. No-op if a token hash is already stored.
   def ensure_authentication_token!
-    return if authentication_token.present? && token_expires_at&.future?
+    return if authentication_token.present?
 
     loop do
       plain = Devise.friendly_token
@@ -46,16 +46,12 @@ class User < ApplicationRecord
     end
   end
 
-  # Looks up a user by hashing the incoming bearer token, checking expiry.
-  # Returns nil for blank, unknown, or expired tokens.
+  # Looks up a user by hashing the incoming bearer token.
+  # Expiry is enforced client-side only — the backend accepts any valid token hash.
   def self.find_by_token(token)
     return nil if token.blank?
 
-    user = find_by(authentication_token: Digest::SHA256.hexdigest(token))
-    return nil if user.nil?
-    return nil if user.token_expires_at.nil? || user.token_expires_at.past?
-
-    user
+    find_by(authentication_token: Digest::SHA256.hexdigest(token))
   end
 
   private
