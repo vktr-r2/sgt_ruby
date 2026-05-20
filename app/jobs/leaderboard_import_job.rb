@@ -44,7 +44,7 @@ class LeaderboardImportJob < ApplicationJob
     return if tournament.concluded?
 
     today = Date.current
-    tournament_end = tournament.end_date.to_date
+    tournament_end = tournament.end_date.utc.to_date
 
     tz = tournament_timezone(tournament)
     local_time = Time.current.in_time_zone(tz)
