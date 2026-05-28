@@ -240,6 +240,14 @@ RSpec.describe LeaderboardImportJob, type: :job do
       end
     end
 
+    context "at 8PM the day before the tournament end_date (Saturday)" do
+      it "does not enqueue MatchResultsJob" do
+        travel_to Time.find_zone("America/New_York").local(2026, 6, 6, 20, 0, 0) do
+          expect { described_class.perform_now }.not_to have_enqueued_job(MatchResultsJob)
+        end
+      end
+    end
+
     context "at 10AM on the tournament end_date (not final update)" do
       it "does not enqueue MatchResultsJob" do
         travel_to Time.find_zone("America/New_York").local(2026, 6, 7, 10, 0, 0) do
