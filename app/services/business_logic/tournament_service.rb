@@ -7,7 +7,7 @@ module BusinessLogic
       "u.s. open"
     ].freeze
 
-    def initialize(date = Date.today)
+    def initialize(date = Date.current)
       @date = date
     end
 
@@ -65,7 +65,7 @@ module BusinessLogic
                 .find { |t| t.match_results.exists? }
     end
 
-    def previous_year_final_tournament(year = Date.today.year)
+    def previous_year_final_tournament(year = Date.current.year)
       previous_year = year - 1
 
       Tournament.where(year: previous_year)
