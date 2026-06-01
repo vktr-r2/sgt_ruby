@@ -20,17 +20,29 @@ module BusinessLogic
         total_strokes = calculate_user_total_strokes(user)
         cuts_missed = count_cuts_missed(user)
         drafted_winner = user_drafted_golfer?(user, tournament_winner_golfer_id)
+        golfer_totals = calculate_golfer_totals(user)
 
-        { user: user, total_strokes: total_strokes, cuts_missed: cuts_missed, drafted_winner: drafted_winner }
+        { user: user, total_strokes: total_strokes, cuts_missed: cuts_missed,
+          drafted_winner: drafted_winner, golfer_totals: golfer_totals }
       end
 
-      # Sort by total strokes (lowest first)
-      user_totals.sort_by! { |ut| ut[:total_strokes] }
+      # Sort by total strokes, falling back to tie-break rules when equal
+      user_totals.sort! do |a, b|
+        primary = a[:total_strokes] <=> b[:total_strokes]
+        primary != 0 ? primary : BusinessLogic::TiebreakerService.compare(a, b)
+      end
 
       # Assign placements and create match results (all-or-nothing)
       ActiveRecord::Base.transaction do
+        current_place = 1
         user_totals.each_with_index do |user_total, index|
-          place = index + 1
+          if index > 0
+            prev = user_totals[index - 1]
+            completely_tied = prev[:total_strokes] == user_total[:total_strokes] &&
+                              BusinessLogic::TiebreakerService.compare(prev, user_total) == 0
+            current_place = index + 1 unless completely_tied
+          end
+          place = current_place
           points = calculate_points(place)
 
           # Add major championship bonus for winner
@@ -58,6 +70,12 @@ module BusinessLogic
     end
 
     private
+
+    def calculate_golfer_totals(user)
+      MatchPick.where(user: user, tournament: @tournament, drafted: true).map do |pick|
+        Score.where(match_pick: pick).sum(:score)
+      end.sort
+    end
 
     def calculate_user_total_strokes(user)
       # Get all drafted picks for this user in this tournament

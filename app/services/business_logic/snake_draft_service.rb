@@ -84,38 +84,33 @@ module BusinessLogic
     end
 
     def apply_tiebreaker(tied_users, tournament)
-      # Get all match_picks for these users for this tournament with scores
-      picks_with_scores = MatchPick.where(user: tied_users, tournament: tournament, drafted: true)
-                                   .includes(scores: []).to_a
+      winner_golfer_id = find_tournament_winner_golfer_id(tournament)
 
-      # For each user, collect their golfers' round scores
-      user_scores = {}
-      tied_users.each do |user|
-        user_picks = picks_with_scores.select { |p| p.user_id == user.id }
-        all_scores = user_picks.flat_map { |pick| pick.scores.map(&:score) }.compact.sort
-        user_scores[user] = all_scores
+      user_data = tied_users.index_by(&:id).transform_values do |user|
+        build_tiebreaker_data(user, tournament, winner_golfer_id)
       end
 
-      # Compare lowest scores iteratively
       tied_users.sort do |user_a, user_b|
-        scores_a = user_scores[user_a]
-        scores_b = user_scores[user_b]
-
-        # Compare score by score
-        max_length = [ scores_a.length, scores_b.length ].max
-        comparison = 0
-
-        max_length.times do |i|
-          score_a = scores_a[i] || Float::INFINITY
-          score_b = scores_b[i] || Float::INFINITY
-
-          comparison = score_a <=> score_b
-          break if comparison != 0
-        end
-
-        # If still tied, stable sort by user_id
-        comparison == 0 ? user_a.id <=> user_b.id : comparison
+        result = BusinessLogic::TiebreakerService.compare(user_data[user_a.id], user_data[user_b.id])
+        result == 0 ? user_a.id <=> user_b.id : result
       end
+    end
+
+    def find_tournament_winner_golfer_id(tournament)
+      snapshot = LeaderboardSnapshot.find_by(tournament: tournament)
+      return nil unless snapshot&.leaderboard_data
+
+      winner_data = snapshot.leaderboard_data.find { |p| p["position"] == "1" }
+      return nil unless winner_data
+
+      Golfer.find_by(source_id: winner_data["player_id"])&.id
+    end
+
+    def build_tiebreaker_data(user, tournament, winner_golfer_id)
+      picks = MatchPick.where(user: user, tournament: tournament, drafted: true).includes(:scores)
+      golfer_totals = picks.map { |p| p.scores.sum(&:score) }.sort
+      drafted_winner = winner_golfer_id.present? && picks.any? { |p| p.golfer_id == winner_golfer_id }
+      { golfer_totals: golfer_totals, drafted_winner: drafted_winner }
     end
 
     def assign_picks_in_snake_order(draft_order)

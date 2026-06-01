@@ -251,5 +251,121 @@ RSpec.describe BusinessLogic::MatchResultsCalculationService do
         expect(results[users[1].id].cuts_missed).to eq(0)
       end
     end
+
+    context "tie-breaking" do
+      # Helper: create a drafted pick with a single score equal to golfer_total
+      def setup_pick(user, golfer, total)
+        pick = create(:match_pick, user: user, tournament: tournament, golfer: golfer, drafted: true)
+        create(:score, match_pick: pick, round: 1, score: total, status: "complete")
+      end
+
+      before do
+        create(:leaderboard_snapshot, tournament: tournament, leaderboard_data: [
+          { "player_id" => "9999", "position" => "1", "name" => "Tournament Winner" }
+        ])
+      end
+
+      context "tie resolved by rule a (best individual golfer total)" do
+        it "places user with lower best golfer total in a higher place" do
+          # users[0] and users[1] have the same total (1000) but different best golfers
+          setup_pick(users[0], golfer1, 250) # best golfer = 250, total = 1000
+          setup_pick(users[0], golfer2, 750)
+          setup_pick(users[1], golfer3, 260) # best golfer = 260, total = 1000
+          setup_pick(users[1], golfer4, 740)
+          setup_pick(users[2], golfer5, 270)
+          setup_pick(users[2], golfer6, 800)
+
+          described_class.new(tournament).calculate
+
+          results = MatchResult.where(tournament: tournament).index_by(&:user_id)
+          expect(results[users[0].id].place).to eq(1)
+          expect(results[users[1].id].place).to eq(2)
+          expect(results[users[2].id].place).to eq(3)
+        end
+      end
+
+      context "tie resolved by rule b (winner picked)" do
+        it "places the user who drafted the tournament winner above the other" do
+          winner_golfer = create(:golfer, source_id: "9999", f_name: "Tournament", l_name: "Winner")
+          # Both users have same total (1000) and same best golfer total (268)
+          # but users[1] drafted the tournament winner
+          setup_pick(users[0], golfer1, 268)
+          setup_pick(users[0], golfer2, 732)
+          setup_pick(users[1], winner_golfer, 268) # same best golfer total, but IS the winner
+          setup_pick(users[1], golfer3, 732)
+          setup_pick(users[2], golfer4, 280)
+          setup_pick(users[2], golfer5, 800)
+
+          described_class.new(tournament).calculate
+
+          results = MatchResult.where(tournament: tournament).index_by(&:user_id)
+          expect(results[users[1].id].place).to eq(1)
+          expect(results[users[0].id].place).to eq(2)
+        end
+      end
+
+      context "complete tie (rule f)" do
+        it "assigns both users the same place and same points" do
+          setup_pick(users[0], golfer1, 268)
+          setup_pick(users[0], golfer2, 732)
+          setup_pick(users[1], golfer3, 268) # identical golfer totals to users[0]
+          setup_pick(users[1], golfer4, 732)
+          setup_pick(users[2], golfer5, 280)
+          setup_pick(users[2], golfer6, 800)
+          setup_pick(users[3], golfer7, 290)
+          setup_pick(users[3], golfer8, 900)
+
+          described_class.new(tournament).calculate
+
+          tied = MatchResult.where(tournament: tournament, user: [users[0], users[1]])
+          expect(tied.pluck(:place).uniq).to eq([1])
+          expect(tied.pluck(:total_score).uniq).to eq([-4])
+        end
+
+        it "skips place 2 when two users tie for 1st — remaining users get places 3 and 4" do
+          setup_pick(users[0], golfer1, 268)
+          setup_pick(users[0], golfer2, 732)
+          setup_pick(users[1], golfer3, 268)
+          setup_pick(users[1], golfer4, 732)
+          setup_pick(users[2], golfer5, 280)
+          setup_pick(users[2], golfer6, 800)
+          setup_pick(users[3], golfer7, 290)
+          setup_pick(users[3], golfer8, 900)
+
+          described_class.new(tournament).calculate
+
+          expect(MatchResult.where(tournament: tournament).pluck(:place).sort).to eq([1, 1, 3, 4])
+        end
+
+        it "skips place 3 when two users tie for 2nd" do
+          setup_pick(users[0], golfer1, 500)  # 1st (lowest total)
+          setup_pick(users[1], golfer2, 400)  # tied 2nd
+          setup_pick(users[1], golfer3, 400)
+          setup_pick(users[2], golfer4, 400)  # tied 2nd (identical totals to users[1])
+          setup_pick(users[2], golfer5, 400)
+          setup_pick(users[3], golfer6, 1200) # 4th (highest total)
+
+          described_class.new(tournament).calculate
+
+          places = MatchResult.where(tournament: tournament).pluck(:place).sort
+          expect(places).to eq([1, 2, 2, 4])
+        end
+      end
+
+      context "non-tied tournaments are not affected" do
+        it "produces normal 1-2-3-4 placement when all totals differ" do
+          setup_pick(users[0], golfer1, 260)
+          setup_pick(users[1], golfer2, 270)
+          setup_pick(users[2], golfer3, 280)
+          setup_pick(users[3], golfer4, 290)
+
+          described_class.new(tournament).calculate
+
+          results = MatchResult.where(tournament: tournament).order(:place)
+          expect(results.pluck(:place)).to eq([1, 2, 3, 4])
+          expect(results.pluck(:total_score)).to eq([-4, -3, -2, -1])
+        end
+      end
+    end
   end
 end
