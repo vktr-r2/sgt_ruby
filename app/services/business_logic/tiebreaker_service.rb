@@ -4,7 +4,7 @@ module BusinessLogic
     # Returns: -1 if user_a wins, 1 if user_b wins, 0 if completely tied.
     #
     # Expected keys in each data hash:
-    #   golfer_totals:  [Integer, ...] sorted ascending (best/lowest first), up to 8 elements
+    #   round_scores:   [Integer, ...] all individual round scores sorted ascending (best/lowest first)
     #   drafted_winner: Boolean — did this user draft the tournament winner?
     def self.compare(user_a_data, user_b_data)
       new(user_a_data, user_b_data).compare
@@ -16,17 +16,18 @@ module BusinessLogic
     end
 
     def compare
-      # Rule a: best individual golfer total
-      result = compare_golfer_at_index(0)
+      # Rule a: best individual round score
+      result = compare_round_at_index(0)
       return result unless result == 0
 
       # Rule b: did one user pick the tournament winner?
       result = compare_winner_picked
       return result unless result == 0
 
-      # Rules c-e: 2nd, 3rd, 4th best golfer totals
-      (1..3).each do |i|
-        result = compare_golfer_at_index(i)
+      # Rules c+: 2nd, 3rd, ... best round scores
+      max_len = [@a[:round_scores].length, @b[:round_scores].length].max
+      (1...max_len).each do |i|
+        result = compare_round_at_index(i)
         return result unless result == 0
       end
 
@@ -36,10 +37,10 @@ module BusinessLogic
 
     private
 
-    def compare_golfer_at_index(i)
-      a_total = @a[:golfer_totals][i] || Float::INFINITY
-      b_total = @b[:golfer_totals][i] || Float::INFINITY
-      a_total <=> b_total
+    def compare_round_at_index(i)
+      a_score = @a[:round_scores][i] || Float::INFINITY
+      b_score = @b[:round_scores][i] || Float::INFINITY
+      a_score <=> b_score
     end
 
     def compare_winner_picked

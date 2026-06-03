@@ -20,10 +20,10 @@ module BusinessLogic
         total_strokes = calculate_user_total_strokes(user)
         cuts_missed = count_cuts_missed(user)
         drafted_winner = user_drafted_golfer?(user, tournament_winner_golfer_id)
-        golfer_totals = calculate_golfer_totals(user)
+        round_scores = collect_round_scores(user)
 
         { user: user, total_strokes: total_strokes, cuts_missed: cuts_missed,
-          drafted_winner: drafted_winner, golfer_totals: golfer_totals }
+          drafted_winner: drafted_winner, round_scores: round_scores }
       end
 
       # Sort by total strokes, falling back to tie-break rules when equal
@@ -71,10 +71,9 @@ module BusinessLogic
 
     private
 
-    def calculate_golfer_totals(user)
-      MatchPick.where(user: user, tournament: @tournament, drafted: true).map do |pick|
-        Score.where(match_pick: pick).sum(:score)
-      end.sort
+    def collect_round_scores(user)
+      picks = MatchPick.where(user: user, tournament: @tournament, drafted: true)
+      Score.where(match_pick: picks).pluck(:score).sort
     end
 
     def calculate_user_total_strokes(user)

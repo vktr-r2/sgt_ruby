@@ -1,73 +1,73 @@
 require "rails_helper"
 
 RSpec.describe BusinessLogic::TiebreakerService do
-  def data(golfer_totals:, drafted_winner: false)
-    { golfer_totals: golfer_totals, drafted_winner: drafted_winner }
+  def data(round_scores:, drafted_winner: false)
+    { round_scores: round_scores, drafted_winner: drafted_winner }
   end
 
   describe ".compare" do
-    context "rule a: best golfer total" do
-      it "returns -1 when user_a has a lower best golfer total" do
-        a = data(golfer_totals: [268, 275, 280, 285])
-        b = data(golfer_totals: [270, 275, 280, 285])
+    context "rule a: best round score" do
+      it "returns -1 when user_a has a lower best round score" do
+        a = data(round_scores: [64, 67, 68, 69])
+        b = data(round_scores: [65, 67, 68, 69])
         expect(described_class.compare(a, b)).to eq(-1)
       end
 
-      it "returns 1 when user_b has a lower best golfer total" do
-        a = data(golfer_totals: [272, 275, 280, 285])
-        b = data(golfer_totals: [268, 275, 280, 285])
+      it "returns 1 when user_b has a lower best round score" do
+        a = data(round_scores: [66, 67, 68, 69])
+        b = data(round_scores: [64, 67, 68, 69])
         expect(described_class.compare(a, b)).to eq(1)
       end
     end
 
-    context "rule b: winner picked (when best totals are equal)" do
+    context "rule b: winner picked (when best round scores are equal)" do
       it "returns -1 when user_a picked the winner and user_b did not" do
-        a = data(golfer_totals: [268, 275, 280, 285], drafted_winner: true)
-        b = data(golfer_totals: [268, 275, 280, 285], drafted_winner: false)
+        a = data(round_scores: [64, 67, 68, 69], drafted_winner: true)
+        b = data(round_scores: [64, 67, 68, 69], drafted_winner: false)
         expect(described_class.compare(a, b)).to eq(-1)
       end
 
       it "returns 1 when user_b picked the winner and user_a did not" do
-        a = data(golfer_totals: [268, 275, 280, 285], drafted_winner: false)
-        b = data(golfer_totals: [268, 275, 280, 285], drafted_winner: true)
+        a = data(round_scores: [64, 67, 68, 69], drafted_winner: false)
+        b = data(round_scores: [64, 67, 68, 69], drafted_winner: true)
         expect(described_class.compare(a, b)).to eq(1)
       end
     end
 
-    context "rules c-e: 2nd, 3rd, 4th golfer totals" do
-      it "uses 2nd best golfer when 1st totals and winner_picked are equal" do
-        a = data(golfer_totals: [268, 273, 280, 285])
-        b = data(golfer_totals: [268, 275, 280, 285])
+    context "rules c+: 2nd, 3rd, 4th best round scores" do
+      it "uses 2nd best round when 1st scores and winner_picked are equal" do
+        a = data(round_scores: [64, 65, 68, 69])
+        b = data(round_scores: [64, 67, 68, 69])
         expect(described_class.compare(a, b)).to eq(-1)
       end
 
-      it "uses 3rd best golfer when 1st and 2nd totals are equal" do
-        a = data(golfer_totals: [268, 275, 278, 285])
-        b = data(golfer_totals: [268, 275, 280, 285])
+      it "uses 3rd best round when 1st and 2nd scores are equal" do
+        a = data(round_scores: [64, 67, 66, 69])
+        b = data(round_scores: [64, 67, 68, 69])
         expect(described_class.compare(a, b)).to eq(-1)
       end
 
-      it "uses 4th best golfer as final numeric comparison" do
-        a = data(golfer_totals: [268, 275, 280, 283])
-        b = data(golfer_totals: [268, 275, 280, 285])
+      it "uses 4th best round as further comparison" do
+        a = data(round_scores: [64, 67, 68, 65])
+        b = data(round_scores: [64, 67, 68, 69])
         expect(described_class.compare(a, b)).to eq(-1)
       end
     end
 
     context "rule f: complete tie" do
-      it "returns 0 when all four golfer totals are equal and neither picked the winner" do
-        a = data(golfer_totals: [268, 275, 280, 285])
-        b = data(golfer_totals: [268, 275, 280, 285])
+      it "returns 0 when all round scores are equal and neither picked the winner" do
+        a = data(round_scores: [64, 67, 68, 69])
+        b = data(round_scores: [64, 67, 68, 69])
         expect(described_class.compare(a, b)).to eq(0)
       end
     end
 
     context "winner_picked rule applied mid-comparison" do
-      it "applies winner_picked check after rule a, not after all golfer comparisons" do
-        # Rule a tied (both 268), rule b: a picked winner → a wins before reaching rule c
-        a = data(golfer_totals: [268, 260, 260, 260], drafted_winner: true)
-        b = data(golfer_totals: [268, 270, 280, 290], drafted_winner: false)
-        # Even though b has worse 2nd/3rd/4th golfers, rule b fires first → a wins
+      it "applies winner_picked check after rule a, not after all round comparisons" do
+        # Rule a tied (both 64), rule b: a picked winner → a wins before reaching rule c
+        a = data(round_scores: [64, 60, 60, 60], drafted_winner: true)
+        b = data(round_scores: [64, 70, 72, 74], drafted_winner: false)
+        # Even though b has worse 2nd/3rd/4th rounds, rule b fires first → a wins
         expect(described_class.compare(a, b)).to eq(-1)
       end
     end

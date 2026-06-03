@@ -108,9 +108,9 @@ module BusinessLogic
 
     def build_tiebreaker_data(user, tournament, winner_golfer_id)
       picks = MatchPick.where(user: user, tournament: tournament, drafted: true).includes(:scores)
-      golfer_totals = picks.map { |p| p.scores.sum(&:score) }.sort
+      round_scores = picks.flat_map { |p| p.scores.map(&:score) }.sort
       drafted_winner = winner_golfer_id.present? && picks.any? { |p| p.golfer_id == winner_golfer_id }
-      { golfer_totals: golfer_totals, drafted_winner: drafted_winner }
+      { round_scores: round_scores, drafted_winner: drafted_winner }
     end
 
     def assign_picks_in_snake_order(draft_order)

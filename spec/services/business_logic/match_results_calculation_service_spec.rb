@@ -253,10 +253,10 @@ RSpec.describe BusinessLogic::MatchResultsCalculationService do
     end
 
     context "tie-breaking" do
-      # Helper: create a drafted pick with a single score equal to golfer_total
-      def setup_pick(user, golfer, total)
+      # Helper: create a drafted pick with a single round score
+      def setup_pick(user, golfer, round_score)
         pick = create(:match_pick, user: user, tournament: tournament, golfer: golfer, drafted: true)
-        create(:score, match_pick: pick, round: 1, score: total, status: "complete")
+        create(:score, match_pick: pick, round: 1, score: round_score, status: "complete")
       end
 
       before do
@@ -265,12 +265,12 @@ RSpec.describe BusinessLogic::MatchResultsCalculationService do
         ])
       end
 
-      context "tie resolved by rule a (best individual golfer total)" do
-        it "places user with lower best golfer total in a higher place" do
-          # users[0] and users[1] have the same total (1000) but different best golfers
-          setup_pick(users[0], golfer1, 250) # best golfer = 250, total = 1000
+      context "tie resolved by rule a (best individual round score)" do
+        it "places user with lower best round score in a higher place" do
+          # users[0] and users[1] have the same total (1000) but different best round scores
+          setup_pick(users[0], golfer1, 250) # best round = 250, total = 1000
           setup_pick(users[0], golfer2, 750)
-          setup_pick(users[1], golfer3, 260) # best golfer = 260, total = 1000
+          setup_pick(users[1], golfer3, 260) # best round = 260, total = 1000
           setup_pick(users[1], golfer4, 740)
           setup_pick(users[2], golfer5, 270)
           setup_pick(users[2], golfer6, 800)
